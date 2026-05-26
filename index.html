@@ -143,26 +143,42 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
   }
 
   function spawnMeteor(){
-    const angle=-25+Math.random()*16;
+    // Random edge: 0=top, 1=right, 2=bottom, 3=left
+    const edge=Math.floor(Math.random()*4);
+    let x,y,angle;
+    if(edge===0){// top — shooting down-right or down-left
+      x=Math.random()*w;y=-20;
+      angle=-35+Math.random()*40; // -35° to +5°
+    }else if(edge===1){// right — shooting left-down
+      x=w+20;y=Math.random()*h*0.7;
+      angle=160+Math.random()*35; // 160° to 195° (right-to-left, down)
+    }else if(edge===2){// bottom — shooting up (rarer, more dramatic)
+      x=Math.random()*w;y=h+20;
+      angle=-160+Math.random()*30; // shoot up-left or up-right
+    }else{// left — shooting right-down
+      x=-20;y=Math.random()*h*0.7;
+      angle=-10+Math.random()*35; // -10° to 25° (left-to-right, down)
+    }
     const rad=angle*Math.PI/180;
-    const speed=14+Math.random()*22;
-    // Gold hue range, occasionally purple
-    const hue=Math.random()<0.1?268:Math.random()<0.3?32:46;
+    const speed=18+Math.random()*28;
+    const hue=Math.random()<0.08?270:Math.random()<0.25?34:48;
     return {
-      x:Math.random()*(w*0.7)+w*0.15,
-      y:-Math.random()*h*0.35-10,
+      x,y,
       vx:Math.cos(rad)*speed,
       vy:-Math.sin(rad)*speed,
       hue:hue,
-      life:1,decay:0.0035+Math.random()*0.006,
-      trail:[],trailMax:35+Math.floor(Math.random()*25)
+      life:1,decay:0.0025+Math.random()*0.0045,
+      trail:[],trailMax:40+Math.floor(Math.random()*30)
     };
   }
 
-  for(let i=0;i<5;i++){
+  // Start with 8 active meteors across the screen
+  for(let i=0;i<8;i++){
     const m=spawnMeteor();
-    m.y=-Math.random()*h*0.7;
-    m.life=0.2+Math.random()*0.8;
+    m.life=0.15+Math.random()*0.85;
+    // Randomize starting positions along their paths
+    m.x-=m.vx*Math.random()*60;
+    m.y-=m.vy*Math.random()*60;
     meteors.push(m);
   }
 
@@ -183,11 +199,14 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
       ctx.fill();
     });
 
-    // ── Spawn ──
+    // ── Spawn: very dense — 2~5 meteors per frame at times ──
     spawnTimer+=dts;
-    if(spawnTimer>0.12+Math.random()*0.35){
-      spawnTimer=0;
-      meteors.push(spawnMeteor());
+    const count=Math.random()<0.25?2:1; // 25% chance of double spawn
+    for(let k=0;k<count;k++){
+      if(spawnTimer>0.06+Math.random()*0.22){
+        spawnTimer=0;
+        meteors.push(spawnMeteor());
+      }
     }
 
     // ── Use additive blending for intense glow ──
@@ -210,43 +229,50 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
       if(m.trail.length>1){
         for(let j=1;j<m.trail.length;j++){
           const t=j/m.trail.length;
-          const alpha=t*t*m.life*0.8;
-          const lw=t*5+0.5;
+          const alpha=t*t*m.life*0.9;
+          const lw=t*7+0.5;
+          // Wide glow layer
           ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
-          ctx.strokeStyle=`hsla(${m.hue},90%,${75+t*25}%,${alpha})`;
+          ctx.strokeStyle=`hsla(${m.hue},100%,85%,${alpha*0.25})`;
+          ctx.lineWidth=lw+16;ctx.lineCap='round';ctx.stroke();
+          // Mid layer
+          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+          ctx.strokeStyle=`hsla(${m.hue},100%,95%,${alpha*0.5})`;
+          ctx.lineWidth=lw+6;ctx.lineCap='round';ctx.stroke();
+          // Core
+          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+          ctx.strokeStyle=`hsla(0,0%,100%,${alpha})`;
           ctx.lineWidth=lw;ctx.lineCap='round';ctx.stroke();
-          // Extra glow layer
-          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
-          ctx.strokeStyle=`hsla(${m.hue},100%,90%,${alpha*0.3})`;
-          ctx.lineWidth=lw+10;ctx.lineCap='round';ctx.stroke();
         }
       }
 
       // ── Head glow ──
       const a=m.life;
-      // Outer halo
-      const g3=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,40);
-      g3.addColorStop(0,`hsla(${m.hue},100%,90%,${a*0.5})`);
-      g3.addColorStop(0.3,`hsla(${m.hue},100%,80%,${a*0.2})`);
-      g3.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
-      ctx.beginPath();ctx.arc(m.x,m.y,40,0,Math.PI*2);
+      // Outer halo — massive
+      const g3=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,60);
+      g3.addColorStop(0,`hsla(${m.hue},100%,90%,${a*0.55})`);
+      g3.addColorStop(0.25,`hsla(${m.hue},100%,80%,${a*0.25})`);
+      g3.addColorStop(0.6,`hsla(${m.hue},100%,65%,${a*0.06})`);
+      g3.addColorStop(1,`hsla(${m.hue},100%,50%,0)`);
+      ctx.beginPath();ctx.arc(m.x,m.y,60,0,Math.PI*2);
       ctx.fillStyle=g3;ctx.fill();
 
       // Mid glow
-      const g2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,16);
-      g2.addColorStop(0,`hsla(${m.hue},100%,95%,${a*0.85})`);
-      g2.addColorStop(0.4,`hsla(${m.hue},100%,85%,${a*0.4})`);
-      g2.addColorStop(1,`hsla(${m.hue},100%,70%,0)`);
-      ctx.beginPath();ctx.arc(m.x,m.y,16,0,Math.PI*2);
+      const g2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,22);
+      g2.addColorStop(0,`hsla(${m.hue},100%,98%,${a*0.9})`);
+      g2.addColorStop(0.35,`hsla(${m.hue},100%,85%,${a*0.5})`);
+      g2.addColorStop(0.7,`hsla(${m.hue},100%,70%,${a*0.12})`);
+      g2.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
+      ctx.beginPath();ctx.arc(m.x,m.y,22,0,Math.PI*2);
       ctx.fillStyle=g2;ctx.fill();
 
-      // White-hot core
-      const g1=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,6);
+      // White-hot core — larger
+      const g1=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,9);
       g1.addColorStop(0,'rgba(255,255,255,1)');
-      g1.addColorStop(0.15,`hsla(${m.hue},100%,95%,0.95)`);
-      g1.addColorStop(0.5,`hsla(${m.hue},100%,80%,0.4)`);
+      g1.addColorStop(0.1,`hsla(${m.hue},100%,98%,1)`);
+      g1.addColorStop(0.4,`hsla(${m.hue},100%,85%,0.5)`);
       g1.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
-      ctx.beginPath();ctx.arc(m.x,m.y,6,0,Math.PI*2);
+      ctx.beginPath();ctx.arc(m.x,m.y,9,0,Math.PI*2);
       ctx.fillStyle=g1;ctx.fill();
     }
 
