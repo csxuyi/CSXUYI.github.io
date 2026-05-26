@@ -1315,7 +1315,7 @@ body{
       <span class="sweep"></span><span class="fate-dot"></span>祈愿1次
     </button>
     <div class="btn-wish-wrap">
-      <div class="pity-pill" id="pity-pill">距5星保底还有<span class="pity-num" id="pity-rem">90</span>次</div>
+      <div class="pity-pill" id="pity-pill">5★保底 <span class="pity-num" id="pity-rem">90</span>次 · 6★保底 <span class="pity-num" id="pity-6-rem">300</span>次</div>
       <button class="btn-wish btn-wish-x10" id="btn-ten">
         <span class="sweep"></span><span class="fate-dot"></span>祈愿10次
       </button>
@@ -1341,8 +1341,9 @@ body{
         <tr><td>4★ 含保底综合</td><td class="purple">13.00%</td></tr>
         <tr><td>5★ 保底</td><td>90抽必出</td></tr>
         <tr><td>4★ 保底</td><td>10抽必出</td></tr>
+        <tr><td>6★ 保底</td><td class="gold">300抽必出（5★触发）</td></tr>
       </table>
-      <div class="prob-note">* 累计 73 抽起，每抽 5★ 基础概率 +6%。<br>* 4★ 物品有 50% 几率为本期 UP 物品。</div>
+      <div class="prob-note">* 累计 73 抽起，每抽 5★ 基础概率 +6%。<br>* 4★ 物品有 50% 几率为本期 UP 物品。<br>* 抽出 5★ 时有 20% 概率额外掉落 6★，300 抽保底。</div>
     </div>
     <div class="details-sec"><h4>祈愿记录</h4><div class="hist-list" id="d-hist"></div></div>
   </div>
@@ -1455,7 +1456,7 @@ const BN=[
 ];
 
 /* State */
-let S={bn:0,total:0,p5:0,p4:0,guar:false,hist:[],muted:false};
+let S={bn:0,total:0,p5:0,p4:0,p6:0,guar:false,hist:[],muted:false};
 
 /* DOM shortcuts */
 const Q=s=>document.querySelector(s);
@@ -1600,7 +1601,7 @@ function draw1(){
   else{r=3;card=C3[Math.floor(Math.random()*C3.length)]}
   if(r===5)S.p5=0;else S.p5++;
   if(r===4)S.p4=0;else S.p4++;
-  S.total++;return{card,rarity:r};
+  S.p6++;S.total++;return{card,rarity:r};
 }
 
 /* ============================================================
@@ -1900,12 +1901,16 @@ function doDraw(n){
   if(v<n){showToast('「'+BN[S.bn].fate+'」不足，试试右上角 🔨 赚取吧！');return}
   sndButton();
   // Generate results
+  const p6Start=S.p6;
   const rs=[];for(let i=0;i<n;i++)rs.push(draw1());
-  // 6★ bonus: 10% chance per 5★ draw
-  for(const r of rs){
-    if(r.rarity===5&&Math.random()<0.10){
+  // 6★ bonus: 20% chance per 5★, 300-pull hard pity
+  for(let i=0;i<rs.length;i++){
+    const r=rs[i];
+    const pullP6=p6Start+i+1;
+    if(r.rarity===5&&(pullP6>=300||Math.random()<0.20)){
       const six=C6[Math.floor(Math.random()*C6.length)];
       rs.push({card:six,rarity:6});
+      S.p6=0;
     }
   }
   for(const r of rs)S.hist.unshift({card:r.card,rarity:r.rarity,t:Date.now(),bn:S.bn});
@@ -1924,9 +1929,11 @@ function setBtns(d){Q('#btn-single').disabled=d;Q('#btn-ten').disabled=d;Q('#btn
    UI UPDATES
 ============================================================ */
 function updatePity(){
-  const rem=P5-S.p5;
-  Q('#pity-rem').textContent=rem;
-  Q('#pity-pill').classList.toggle('warning',rem<=10);
+  const rem5=P5-S.p5;
+  const rem6=300-S.p6;
+  Q('#pity-rem').textContent=rem5;
+  Q('#pity-6-rem').textContent=Math.max(rem6,0);
+  Q('#pity-pill').classList.toggle('warning',rem5<=10||rem6<=20);
 }
 function updateAll(){
   updatePity();
@@ -2181,11 +2188,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mgState.active)clos
 function load(){
   try{
     const d=JSON.parse(localStorage.getItem('wish_genshin_v4'));
-    if(d){S.total=d.td||0;S.p5=d.p5||0;S.p4=d.p4||0;S.guar=d.gu||false;S.hist=d.hi||[];S.bn=d.bn||0;S.muted=d.mu||false}
+    if(d){S.total=d.td||0;S.p5=d.p5||0;S.p4=d.p4||0;S.p6=d.p6||0;S.guar=d.gu||false;S.hist=d.hi||[];S.bn=d.bn||0;S.muted=d.mu||false}
   }catch(e){}
 }
 function save(){
-  try{localStorage.setItem('wish_genshin_v4',JSON.stringify({td:S.total,p5:S.p5,p4:S.p4,gu:S.guar,hi:S.hist.slice(-500),bn:S.bn,mu:S.muted}))}catch(e){}
+  try{localStorage.setItem('wish_genshin_v4',JSON.stringify({td:S.total,p5:S.p5,p4:S.p4,p6:S.p6,gu:S.guar,hi:S.hist.slice(-500),bn:S.bn,mu:S.muted}))}catch(e){}
 }
 
 /* ============================================================
