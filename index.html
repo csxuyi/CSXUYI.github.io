@@ -127,9 +127,7 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 (function(){
   const c=document.getElementById('starfield');
   const ctx=c.getContext('2d');
-  let w,h;
-  let stars=[];
-  let meteors=[];
+  let w,h,stars=[],meteors=[];
 
   function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
   resize();window.addEventListener('resize',resize);
@@ -145,45 +143,36 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
   }
 
   function spawnMeteor(){
-    const angle=-22+Math.random()*14;
+    const angle=-25+Math.random()*16;
     const rad=angle*Math.PI/180;
-    const speed=10+Math.random()*18;
-    const headR=3.5+Math.random()*5.5;
-    const hue=Math.random()<0.12?265:Math.random()<0.25?30:44;
-    const sat='90%';
+    const speed=14+Math.random()*22;
+    // Gold hue range, occasionally purple
+    const hue=Math.random()<0.1?268:Math.random()<0.3?32:46;
     return {
-      x:Math.random()*(w*0.85)+w*0.05,
-      y:-30-Math.random()*h*0.25,
+      x:Math.random()*(w*0.7)+w*0.15,
+      y:-Math.random()*h*0.35-10,
       vx:Math.cos(rad)*speed,
       vy:-Math.sin(rad)*speed,
-      headR:headR,
       hue:hue,
-      life:1,
-      decay:0.004+Math.random()*0.008,
-      trail:[],
-      trailMax:22+Math.floor(Math.random()*20),
-      sparks:[],
-      sparkTimer:0,
-      sparkInterval:0.04+Math.random()*0.06
+      life:1,decay:0.0035+Math.random()*0.006,
+      trail:[],trailMax:35+Math.floor(Math.random()*25)
     };
   }
 
-  // Start with 6 active meteors
-  for(let i=0;i<6;i++){
+  for(let i=0;i<5;i++){
     const m=spawnMeteor();
     m.y=-Math.random()*h*0.7;
-    m.life=0.3+Math.random()*0.7;
+    m.life=0.2+Math.random()*0.8;
     meteors.push(m);
   }
 
-  let meteorTimer=0;
+  let spawnTimer=0;
 
-  function draw(timestamp,dt){
+  function draw(ts,dt){
     const dts=Math.min(dt,0.1);
-
     ctx.clearRect(0,0,w,h);
 
-    // Static stars — with subtle twinkle
+    // ── Static stars ──
     const now=Date.now()*0.001;
     stars.forEach(s=>{
       s.x+=s.s;
@@ -194,13 +183,15 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
       ctx.fill();
     });
 
-    // Spawn: very frequent
-    meteorTimer+=dts;
-    const spawnGap=0.15+Math.random()*0.4;
-    if(meteorTimer>spawnGap){
-      meteorTimer=0;
+    // ── Spawn ──
+    spawnTimer+=dts;
+    if(spawnTimer>0.12+Math.random()*0.35){
+      spawnTimer=0;
       meteors.push(spawnMeteor());
     }
+
+    // ── Use additive blending for intense glow ──
+    ctx.globalCompositeOperation='lighter';
 
     for(let i=meteors.length-1;i>=0;i--){
       const m=meteors[i];
@@ -208,128 +199,58 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
       m.y+=m.vy*dts*60;
       m.life-=m.decay*dts*60;
 
-      m.trail.push({x:m.x,y:m.y,life:m.life});
+      m.trail.push({x:m.x,y:m.y});
       if(m.trail.length>m.trailMax)m.trail.shift();
 
-      // Sparks
-      m.sparkTimer+=dts*60;
-      if(m.sparkTimer>m.sparkInterval*60){
-        m.sparkTimer=0;
-        if(m.life>0.15){
-          m.sparks.push({
-            x:m.x+(Math.random()-0.5)*m.headR*3,
-            y:m.y+(Math.random()-0.5)*m.headR*3,
-            vx:(Math.random()-0.5)*4,vy:(Math.random()-0.5)*4,
-            life:1,r:0.6+Math.random()*2.2
-          });
-        }
-      }
-      m.sparks.forEach(sp=>{
-        sp.x+=sp.vx*dts*60;sp.y+=sp.vy*dts*60;sp.life-=0.025*dts*60;
-      });
-      m.sparks=m.sparks.filter(sp=>sp.life>0);
-
-      if(m.life<=0||m.y>h+120||m.x<-120||m.x>w+120){
-        meteors.splice(i,1);
-        continue;
+      if(m.life<=0||m.y>h+150||m.x<-150||m.x>w+150){
+        meteors.splice(i,1);continue;
       }
 
-      const headAlpha=m.life;
-
-      // ── Trail: thick, glowing ──
+      // ── Trail: bright, tapered ──
       if(m.trail.length>1){
         for(let j=1;j<m.trail.length;j++){
-          const t0=m.trail[j-1],t1=m.trail[j];
           const t=j/m.trail.length;
-          const alpha=t*m.life*0.7;
-          const w=t*6+0.8;
-          // Outer trail glow
-          ctx.beginPath();ctx.moveTo(t0.x,t0.y);ctx.lineTo(t1.x,t1.y);
-          ctx.strokeStyle=`hsla(${m.hue},${m.sat},80%,${alpha*0.35})`;
-          ctx.lineWidth=w+8;ctx.lineCap='round';ctx.stroke();
-          // Inner trail
-          ctx.beginPath();ctx.moveTo(t0.x,t0.y);ctx.lineTo(t1.x,t1.y);
-          ctx.strokeStyle=`hsla(${m.hue},${m.sat},95%,${alpha})`;
-          ctx.lineWidth=w;ctx.lineCap='round';ctx.stroke();
-          // White-hot core
-          ctx.beginPath();ctx.moveTo(t0.x,t0.y);ctx.lineTo(t1.x,t1.y);
-          ctx.strokeStyle=`hsla(0,0%,100%,${alpha*0.5})`;
-          ctx.lineWidth=w*0.35;ctx.lineCap='round';ctx.stroke();
+          const alpha=t*t*m.life*0.8;
+          const lw=t*5+0.5;
+          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+          ctx.strokeStyle=`hsla(${m.hue},90%,${75+t*25}%,${alpha})`;
+          ctx.lineWidth=lw;ctx.lineCap='round';ctx.stroke();
+          // Extra glow layer
+          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+          ctx.strokeStyle=`hsla(${m.hue},100%,90%,${alpha*0.3})`;
+          ctx.lineWidth=lw+10;ctx.lineCap='round';ctx.stroke();
         }
       }
 
-      // ── Sparks ──
-      m.sparks.forEach(sp=>{
-        ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r,0,Math.PI*2);
-        ctx.fillStyle=`hsla(${m.hue},${m.sat},90%,${sp.life})`;
-        ctx.fill();
-        // Spark glow
-        const sg=ctx.createRadialGradient(sp.x,sp.y,0,sp.x,sp.y,sp.r*3);
-        sg.addColorStop(0,`hsla(${m.hue},${m.sat},100%,${sp.life*0.7})`);
-        sg.addColorStop(1,`hsla(${m.hue},${m.sat},80%,0)`);
-        ctx.beginPath();ctx.arc(sp.x,sp.y,sp.r*3,0,Math.PI*2);
-        ctx.fillStyle=sg;ctx.fill();
-      });
-
-      // ── Head: dramatic multi-layer glow ──
-      const hx=m.x,hy=m.y;
-
-      // Layer 4 — massive outer halo (casts light on surroundings)
-      const g4=ctx.createRadialGradient(hx,hy,m.headR*2,hx,hy,m.headR*14);
-      g4.addColorStop(0,`hsla(${m.hue},${m.sat},80%,${headAlpha*0.15})`);
-      g4.addColorStop(0.5,`hsla(${m.hue},${m.sat},70%,${headAlpha*0.04})`);
-      g4.addColorStop(1,`hsla(${m.hue},${m.sat},60%,0)`);
-      ctx.beginPath();ctx.arc(hx,hy,m.headR*14,0,Math.PI*2);
-      ctx.fillStyle=g4;ctx.fill();
-
-      // Layer 3 — mid glow
-      const g3=ctx.createRadialGradient(hx,hy,m.headR*0.8,hx,hy,m.headR*7);
-      g3.addColorStop(0,`hsla(${m.hue},${m.sat},90%,${headAlpha*0.45})`);
-      g3.addColorStop(0.4,`hsla(${m.hue},${m.sat},80%,${headAlpha*0.2})`);
-      g3.addColorStop(1,`hsla(${m.hue},${m.sat},70%,0)`);
-      ctx.beginPath();ctx.arc(hx,hy,m.headR*7,0,Math.PI*2);
+      // ── Head glow ──
+      const a=m.life;
+      // Outer halo
+      const g3=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,40);
+      g3.addColorStop(0,`hsla(${m.hue},100%,90%,${a*0.5})`);
+      g3.addColorStop(0.3,`hsla(${m.hue},100%,80%,${a*0.2})`);
+      g3.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
+      ctx.beginPath();ctx.arc(m.x,m.y,40,0,Math.PI*2);
       ctx.fillStyle=g3;ctx.fill();
 
-      // Layer 2 — inner glow
-      const g2=ctx.createRadialGradient(hx,hy,m.headR*0.3,hx,hy,m.headR*3);
-      g2.addColorStop(0,`hsla(${m.hue},${m.sat},100%,${headAlpha*0.8})`);
-      g2.addColorStop(0.5,`hsla(${m.hue},${m.sat},85%,${headAlpha*0.35})`);
-      g2.addColorStop(1,`hsla(${m.hue},${m.sat},75%,0)`);
-      ctx.beginPath();ctx.arc(hx,hy,m.headR*3,0,Math.PI*2);
+      // Mid glow
+      const g2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,16);
+      g2.addColorStop(0,`hsla(${m.hue},100%,95%,${a*0.85})`);
+      g2.addColorStop(0.4,`hsla(${m.hue},100%,85%,${a*0.4})`);
+      g2.addColorStop(1,`hsla(${m.hue},100%,70%,0)`);
+      ctx.beginPath();ctx.arc(m.x,m.y,16,0,Math.PI*2);
       ctx.fillStyle=g2;ctx.fill();
 
-      // Layer 1 — core: blazing white-hot center
-      const g1=ctx.createRadialGradient(hx,hy,0,hx,hy,m.headR*1.2);
+      // White-hot core
+      const g1=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,6);
       g1.addColorStop(0,'rgba(255,255,255,1)');
-      g1.addColorStop(0.25,`hsla(${m.hue},${m.sat},98%,0.9)`);
-      g1.addColorStop(0.6,`hsla(${m.hue},${m.sat},85%,0.3)`);
-      g1.addColorStop(1,`hsla(${m.hue},${m.sat},70%,0)`);
-      ctx.beginPath();ctx.arc(hx,hy,m.headR*1.2,0,Math.PI*2);
+      g1.addColorStop(0.15,`hsla(${m.hue},100%,95%,0.95)`);
+      g1.addColorStop(0.5,`hsla(${m.hue},100%,80%,0.4)`);
+      g1.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
+      ctx.beginPath();ctx.arc(m.x,m.y,6,0,Math.PI*2);
       ctx.fillStyle=g1;ctx.fill();
-
-      // Lens flare streaks (cross)
-      if(headAlpha>0.4){
-        ctx.save();ctx.globalAlpha=headAlpha*0.25;
-        const sx=m.headR*0.6,sy=m.headR*10;
-        const grdX=ctx.createLinearGradient(hx-sx,hy,hx+sx,hy);
-        grdX.addColorStop(0,'transparent');
-        grdX.addColorStop(0.45,`hsla(${m.hue},${m.sat},95%,0.5)`);
-        grdX.addColorStop(0.5,'white');
-        grdX.addColorStop(0.55,`hsla(${m.hue},${m.sat},95%,0.5)`);
-        grdX.addColorStop(1,'transparent');
-        ctx.fillStyle=grdX;
-        ctx.fillRect(hx-sx,hy-1.5,sx*2,3);
-        const grdY=ctx.createLinearGradient(hx,hy-sy,hx,hy+sy);
-        grdY.addColorStop(0,'transparent');
-        grdY.addColorStop(0.45,`hsla(${m.hue},${m.sat},95%,0.25)`);
-        grdY.addColorStop(0.5,'white');
-        grdY.addColorStop(0.55,`hsla(${m.hue},${m.sat},95%,0.25)`);
-        grdY.addColorStop(1,'transparent');
-        ctx.fillStyle=grdY;
-        ctx.fillRect(hx-0.8,hy-sy,1.6,sy*2);
-        ctx.restore();
-      }
     }
+
+    ctx.globalCompositeOperation='source-over';
   }
 
   let lastTime=0;
