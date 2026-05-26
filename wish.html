@@ -1897,7 +1897,7 @@ function doDraw(n){
   if(drawing)return;
   // Check resources
   const fc=Q('#fate-num');let v=parseInt(fc.textContent)||0;
-  if(v<n){showToast('「'+BN[S.bn].fate+'」不足');return}
+  if(v<n){showToast('「'+BN[S.bn].fate+'」不足，试试右上角 🔨 赚取吧！');return}
   sndButton();
   // Generate results
   const rs=[];for(let i=0;i<n;i++)rs.push(draw1());
