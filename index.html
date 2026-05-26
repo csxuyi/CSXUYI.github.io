@@ -1,46 +1,192 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>我的主页</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星穹祈愿 · 主页</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#080e20;--bg1:#0c142e;--bg2:#111b3a;
+  --gold:#D4B87A;--g2:#E8D5A3;--g3:#F5E6CC;--g4:#B89A50;
+  --purple:#B08FFF;--p2:#c8b0ff;
+  --panel:rgba(12,20,42,0.72);--pborder:rgba(212,184,122,0.32);
+  --text:#E8E0D0;--t2:#9999AA;
+  --ft:"Noto Serif SC","STSong","SimSun",serif;
+  --fu:"Inter","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}
+body{
+  font-family:var(--fu);background:#05081a;color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
+
+canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* Central content */
+.hero{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;padding:40px 20px;text-align:center;
+}
+
+.hero .logo{
+  font-family:var(--ft);font-size:3rem;font-weight:900;
+  background:linear-gradient(180deg,var(--g3),var(--gold),var(--g4));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:12px;letter-spacing:0.12em;
+}
+.hero .subtitle{
+  font-family:var(--ft);font-size:1rem;color:var(--t2);
+  letter-spacing:0.2em;margin-bottom:60px;
+}
+
+/* Portal cards */
+.portals{
+  display:flex;gap:32px;flex-wrap:wrap;justify-content:center;
+  max-width:700px;width:100%;
+}
+.portal{
+  flex:1;min-width:260px;max-width:320px;
+  padding:40px 28px;border-radius:20px;
+  background:var(--panel);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid var(--pborder);
+  text-decoration:none;color:inherit;
+  transition:transform 0.35s ease,box-shadow 0.35s ease,border-color 0.35s ease;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+}
+.portal:hover{
+  transform:translateY(-8px);
+  border-color:rgba(212,184,122,0.6);
+  box-shadow:0 20px 60px rgba(212,184,122,0.15),0 0 0 1px rgba(212,184,122,0.1);
+}
+.portal-icon{
+  width:72px;height:72px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:2rem;border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.03);
+}
+.portal.wish .portal-icon{background:radial-gradient(circle,rgba(212,184,122,0.15),transparent);border-color:rgba(212,184,122,0.3)}
+.portal.cards .portal-icon{background:radial-gradient(circle,rgba(176,143,255,0.12),transparent);border-color:rgba(176,143,255,0.25)}
+
+.portal h2{
+  font-family:var(--ft);font-size:1.4rem;font-weight:700;
+}
+.portal.wish h2{background:linear-gradient(180deg,var(--g3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.portal.cards h2{background:linear-gradient(180deg,var(--p2),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+.portal p{font-size:0.85rem;color:var(--t2);line-height:1.6}
+
+.portal-arrow{
+  font-size:0.9rem;color:var(--gold);opacity:0;
+  transform:translateX(0);transition:all 0.3s ease;
+}
+.portal:hover .portal-arrow{opacity:1;transform:translateX(4px)}
+
+/* Footer */
+.footer{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  z-index:1;font-size:0.75rem;color:var(--t2);
+  letter-spacing:0.1em;
+}
+
+/* Shooting stars */
+.shooting-star{
+  position:fixed;pointer-events:none;z-index:0;
+  width:2px;height:80px;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,0.8));
+  animation:shoot linear forwards;
+}
+@keyframes shoot{
+  0%{transform:translate(0,0) rotate(-25deg);opacity:1}
+  100%{transform:translate(-400px,600px) rotate(-25deg);opacity:0}
+}
+
+@media(max-width:600px){
+  .hero .logo{font-size:2.2rem}
+  .portals{gap:20px}
+  .portal{padding:30px 20px}
+}
+</style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>👋 你好，欢迎来到我的主页</h1>
-      <p class="subtitle">这里是我的个人空间</p>
-    </header>
 
-    <section class="card">
-      <h2>关于我</h2>
-      <p>在这里写一段自我介绍。你可以介绍你的兴趣、专业、在做的事情。</p>
-    </section>
+<canvas id="starfield"></canvas>
 
-    <section class="card">
-      <h2>项目 / 作品</h2>
-      <div class="projects">
-        <a href="wish.html" class="project-item" style="text-decoration:none;color:inherit">
-          <h3>星穹祈愿</h3>
-          <p>星空主题抽卡模拟器</p>
-        </a>
-        <a href="gacha.html" class="project-item" style="text-decoration:none;color:inherit">
-          <h3>占卜家</h3>
-          <p>塔罗风格抽卡占卜</p>
-        </a>
-      </div>
-    </section>
+<main class="hero">
+  <h1 class="logo">星 穹 祈 愿</h1>
+  <p class="subtitle">— STELLAR WISH —</p>
 
-    <section class="card">
-      <h2>联系方式</h2>
-      <p>📧 邮箱：your-email@example.com</p>
-      <p>💬 微信：your_wechat</p>
-    </section>
-
-    <footer>
-      <p>© 2026 我的个人主页 — 由 GitHub Pages 驱动</p>
-    </footer>
+  <div class="portals">
+    <a href="wish.html" class="portal wish">
+      <div class="portal-icon">🌠</div>
+      <h2>祈 愿</h2>
+      <p>踏入星河，抽取命运之卡<br>每张卡牌都承载着星穹的祝福</p>
+      <span class="portal-arrow">进入 →</span>
+    </a>
+    <a href="cards.html" class="portal cards">
+      <div class="portal-icon">🂠</div>
+      <h2>卡牌图鉴</h2>
+      <p>浏览全部收藏，细品每一张<br>卡牌背后的故事与灵魂</p>
+      <span class="portal-arrow">进入 →</span>
+    </a>
   </div>
+</main>
+
+<footer class="footer">© 2026 星穹祈愿 — Stellar Wish</footer>
+
+<script>
+// Starfield
+(function(){
+  const c=document.getElementById('starfield');
+  const ctx=c.getContext('2d');
+  let stars=[],w,h;
+
+  function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+
+  for(let i=0;i<150;i++){
+    stars.push({
+      x:Math.random()*w,y:Math.random()*h,
+      r:Math.random()*1.8+0.3,
+      a:Math.random()*0.7+0.15,
+      s:Math.random()*0.003+0.001,
+      phase:Math.random()*Math.PI*2
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    stars.forEach(s=>{
+      s.x+=s.s;
+      if(s.x>w+5){s.x=-5;s.y=Math.random()*h}
+      const alpha=s.a+Math.sin(Date.now()*0.001+s.phase)*0.2;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(212,184,122,${Math.max(0,alpha)})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Occasional shooting star
+  function spawnShootingStar(){
+    const star=document.createElement('div');
+    star.className='shooting-star';
+    star.style.left=(Math.random()*60+20)+'%';
+    star.style.top=(Math.random()*30)+'%';
+    star.style.animationDuration=(1.2+Math.random()*1.5)+'s';
+    document.body.appendChild(star);
+    setTimeout(()=>star.remove(),3000);
+  }
+  setInterval(()=>{if(Math.random()<0.3)spawnShootingStar()},4000);
+  spawnShootingStar();
+})();
+</script>
+
 </body>
 </html>
