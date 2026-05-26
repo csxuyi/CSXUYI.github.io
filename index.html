@@ -26,7 +26,6 @@ body{
 
 canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 
-/* Central content */
 .hero{
   position:relative;z-index:1;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -44,7 +43,6 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
   letter-spacing:0.2em;margin-bottom:60px;
 }
 
-/* Portal cards */
 .portals{
   display:flex;gap:32px;flex-wrap:wrap;justify-content:center;
   max-width:700px;width:100%;
@@ -74,9 +72,7 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 .portal.wish .portal-icon{background:radial-gradient(circle,rgba(212,184,122,0.15),transparent);border-color:rgba(212,184,122,0.3)}
 .portal.cards .portal-icon{background:radial-gradient(circle,rgba(176,143,255,0.12),transparent);border-color:rgba(176,143,255,0.25)}
 
-.portal h2{
-  font-family:var(--ft);font-size:1.4rem;font-weight:700;
-}
+.portal h2{font-family:var(--ft);font-size:1.4rem;font-weight:700}
 .portal.wish h2{background:linear-gradient(180deg,var(--g3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .portal.cards h2{background:linear-gradient(180deg,var(--p2),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
@@ -88,23 +84,10 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 }
 .portal:hover .portal-arrow{opacity:1;transform:translateX(4px)}
 
-/* Footer */
 .footer{
   position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
   z-index:1;font-size:0.75rem;color:var(--t2);
   letter-spacing:0.1em;
-}
-
-/* Shooting stars */
-.shooting-star{
-  position:fixed;pointer-events:none;z-index:0;
-  width:2px;height:80px;
-  background:linear-gradient(to bottom,transparent,rgba(255,255,255,0.8));
-  animation:shoot linear forwards;
-}
-@keyframes shoot{
-  0%{transform:translate(0,0) rotate(-25deg);opacity:1}
-  100%{transform:translate(-400px,600px) rotate(-25deg);opacity:0}
 }
 
 @media(max-width:600px){
@@ -141,27 +124,70 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 <footer class="footer">© 2026 星穹祈愿 — Stellar Wish</footer>
 
 <script>
-// Starfield
 (function(){
   const c=document.getElementById('starfield');
   const ctx=c.getContext('2d');
-  let stars=[],w,h;
+  let w,h;
+  let stars=[];
+  let meteors=[];
 
   function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
   resize();window.addEventListener('resize',resize);
 
-  for(let i=0;i<150;i++){
+  // Static stars
+  for(let i=0;i<180;i++){
     stars.push({
       x:Math.random()*w,y:Math.random()*h,
-      r:Math.random()*1.8+0.3,
+      r:Math.random()*1.6+0.3,
       a:Math.random()*0.7+0.15,
       s:Math.random()*0.003+0.001,
       phase:Math.random()*Math.PI*2
     });
   }
 
-  function draw(){
+  // Meteor class
+  function spawnMeteor(){
+    const angle=-20+Math.random()*10; // -20° to -10° (slightly varied)
+    const rad=angle*Math.PI/180;
+    const speed=8+Math.random()*14;
+    const len=60+Math.random()*120;
+    const headR=1+Math.random()*1.8;
+    // Colors: mostly white-gold, occasionally purple
+    const hue=Math.random()<0.15?260:42;
+    const sat=Math.random()<0.15?'100%':'80%';
+    return {
+      x:Math.random()*(w*0.8)+w*0.1,
+      y:-20-Math.random()*h*0.3,
+      vx:Math.cos(rad)*speed,
+      vy:-Math.sin(rad)*speed,
+      len:len,
+      headR:headR,
+      hue:hue,
+      sat:sat,
+      life:1,
+      decay:0.006+Math.random()*0.012,
+      trail:[],
+      trailMax:14+Math.floor(Math.random()*16)
+    };
+  }
+
+  // Start with 3 meteors
+  for(let i=0;i<3;i++){
+    const m=spawnMeteor();
+    m.y=-Math.random()*h*0.6;
+    meteors.push(m);
+  }
+
+  let meteorTimer=0;
+  const meteorInterval=0.5; // base interval seconds between spawns
+
+  function draw(timestamp,dt){
+    // dt in seconds, clamp to avoid jumps
+    const dts=Math.min(dt,0.1);
+
     ctx.clearRect(0,0,w,h);
+
+    // Draw static stars
     stars.forEach(s=>{
       s.x+=s.s;
       if(s.x>w+5){s.x=-5;s.y=Math.random()*h}
@@ -170,22 +196,73 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
       ctx.fillStyle=`rgba(212,184,122,${Math.max(0,alpha)})`;
       ctx.fill();
     });
-    requestAnimationFrame(draw);
-  }
-  draw();
 
-  // Occasional shooting star
-  function spawnShootingStar(){
-    const star=document.createElement('div');
-    star.className='shooting-star';
-    star.style.left=(Math.random()*60+20)+'%';
-    star.style.top=(Math.random()*30)+'%';
-    star.style.animationDuration=(1.2+Math.random()*1.5)+'s';
-    document.body.appendChild(star);
-    setTimeout(()=>star.remove(),3000);
+    // Spawn new meteors
+    meteorTimer+=dts;
+    const spawnGap=meteorInterval+Math.random()*1.2;
+    if(meteorTimer>spawnGap){
+      meteorTimer=0;
+      meteors.push(spawnMeteor());
+    }
+
+    // Draw & update meteors
+    for(let i=meteors.length-1;i>=0;i--){
+      const m=meteors[i];
+      m.x+=m.vx*dts*60;
+      m.y+=m.vy*dts*60;
+      m.life-=m.decay*dts*60;
+
+      // Add trail point
+      m.trail.push({x:m.x,y:m.y,life:m.life});
+      if(m.trail.length>m.trailMax)m.trail.shift();
+
+      // Remove dead
+      if(m.life<=0||m.y>h+100||m.x<-100||m.x>w+100){
+        meteors.splice(i,1);
+        continue;
+      }
+
+      // Draw trail
+      if(m.trail.length>1){
+        for(let j=1;j<m.trail.length;j++){
+          const t0=m.trail[j-1];
+          const t1=m.trail[j];
+          const alpha=(j/m.trail.length)*m.life*0.5;
+          ctx.beginPath();
+          ctx.moveTo(t0.x,t0.y);
+          ctx.lineTo(t1.x,t1.y);
+          ctx.strokeStyle=`hsla(${m.hue},${m.sat},85%,${alpha})`;
+          ctx.lineWidth=0.6+(j/m.trail.length)*2;
+          ctx.lineCap='round';
+          ctx.stroke();
+        }
+      }
+
+      // Draw head
+      const headAlpha=m.life;
+      // Outer glow
+      const grd=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,m.headR*5);
+      grd.addColorStop(0,`hsla(${m.hue},${m.sat},95%,${headAlpha})`);
+      grd.addColorStop(0.3,`hsla(${m.hue},${m.sat},90%,${headAlpha*0.6})`);
+      grd.addColorStop(1,`hsla(${m.hue},${m.sat},80%,0)`);
+      ctx.beginPath();ctx.arc(m.x,m.y,m.headR*5,0,Math.PI*2);
+      ctx.fillStyle=grd;ctx.fill();
+
+      // Core
+      ctx.beginPath();ctx.arc(m.x,m.y,m.headR,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${m.hue},${m.sat},100%,${headAlpha})`;
+      ctx.fill();
+    }
   }
-  setInterval(()=>{if(Math.random()<0.3)spawnShootingStar()},4000);
-  spawnShootingStar();
+
+  let lastTime=0;
+  function loop(ts){
+    const dt=lastTime?(ts-lastTime)/1000:0.016;
+    lastTime=ts;
+    draw(ts,dt);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 })();
 </script>
 
