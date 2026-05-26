@@ -1456,7 +1456,7 @@ const BN=[
 ];
 
 /* State */
-let S={bn:0,total:0,p5:0,p4:0,p6:0,guar:false,hist:[],muted:false};
+let S={bn:0,total:0,p5:[0,0,0],p4:[0,0,0],p6:[0,0,0],guar:[false,false,false],hist:[],muted:false};
 
 /* DOM shortcuts */
 const Q=s=>document.querySelector(s);
@@ -1582,16 +1582,16 @@ function spawnGoldDrops(){
 /* ============================================================
    DRAW LOGIC
 ============================================================ */
-function gR5(){if(S.p5>=P5-1)return 1;if(S.p5>=SP)return Math.min(R5+(S.p5-SP+1)*SI,1);return R5}
-function gR4(){return S.p4>=P4-1?1:R4}
+function gR5(){const p=S.p5[S.bn];if(p>=P5-1)return 1;if(p>=SP)return Math.min(R5+(p-SP+1)*SI,1);return R5}
+function gR4(){return S.p4[S.bn]>=P4-1?1:R4}
 function draw1(){
-  const b=BN[S.bn];let r,card;
+  const i=S.bn,b=BN[i];let r,card;
   const p5=b.pool5||C5;
   const p4=b.pool4||C4;
   if(Math.random()<gR5()){
     r=5;
-    if(b.up5&&(S.guar||Math.random()<0.5)){card=b.up5;S.guar=false}
-    else{const o=p5.filter(c=>!b.up5||c.id!==b.up5.id);card=o[Math.floor(Math.random()*o.length)];if(b.up5)S.guar=true}
+    if(b.up5&&(S.guar[i]||Math.random()<0.5)){card=b.up5;S.guar[i]=false}
+    else{const o=p5.filter(c=>!b.up5||c.id!==b.up5.id);card=o[Math.floor(Math.random()*o.length)];if(b.up5)S.guar[i]=true}
   }
   else if(Math.random()<gR4()){
     r=4;
@@ -1599,9 +1599,9 @@ function draw1(){
     else card=p4[Math.floor(Math.random()*p4.length)];
   }
   else{r=3;card=C3[Math.floor(Math.random()*C3.length)]}
-  if(r===5)S.p5=0;else S.p5++;
-  if(r===4)S.p4=0;else S.p4++;
-  S.p6++;S.total++;return{card,rarity:r};
+  if(r===5)S.p5[i]=0;else S.p5[i]++;
+  if(r===4)S.p4[i]=0;else S.p4[i]++;
+  S.p6[i]++;S.total++;return{card,rarity:r};
 }
 
 /* ============================================================
@@ -1901,7 +1901,7 @@ function doDraw(n){
   if(v<n){showToast('「'+BN[S.bn].fate+'」不足，试试右上角 🔨 赚取吧！');return}
   sndButton();
   // Generate results
-  const p6Start=S.p6;
+  const bi=S.bn,p6Start=S.p6[bi];
   const rs=[];for(let i=0;i<n;i++)rs.push(draw1());
   // 6★ bonus: 20% chance per 5★, 300-pull hard pity
   for(let i=0;i<rs.length;i++){
@@ -1910,7 +1910,7 @@ function doDraw(n){
     if(r.rarity===5&&(pullP6>=300||Math.random()<0.20)){
       const six=C6[Math.floor(Math.random()*C6.length)];
       rs.push({card:six,rarity:6});
-      S.p6=0;
+      S.p6[bi]=0;
     }
   }
   for(const r of rs)S.hist.unshift({card:r.card,rarity:r.rarity,t:Date.now(),bn:S.bn});
@@ -1929,8 +1929,9 @@ function setBtns(d){Q('#btn-single').disabled=d;Q('#btn-ten').disabled=d;Q('#btn
    UI UPDATES
 ============================================================ */
 function updatePity(){
-  const rem5=P5-S.p5;
-  const rem6=300-S.p6;
+  const i=S.bn;
+  const rem5=P5-S.p5[i];
+  const rem6=300-S.p6[i];
   Q('#pity-rem').textContent=rem5;
   Q('#pity-6-rem').textContent=Math.max(rem6,0);
   Q('#pity-pill').classList.toggle('warning',rem5<=10||rem6<=20);
@@ -2187,12 +2188,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mgState.active)clos
 ============================================================ */
 function load(){
   try{
-    const d=JSON.parse(localStorage.getItem('wish_genshin_v4'));
-    if(d){S.total=d.td||0;S.p5=d.p5||0;S.p4=d.p4||0;S.p6=d.p6||0;S.guar=d.gu||false;S.hist=d.hi||[];S.bn=d.bn||0;S.muted=d.mu||false}
+    const d=JSON.parse(localStorage.getItem('wish_genshin_v5'));
+    if(d){S.total=d.td||0;S.hist=d.hi||[];S.bn=d.bn||0;S.muted=d.mu||false;
+      const a=v=>Array.isArray(v)?v:[v||0,v||0,v||0];
+      const ag=v=>Array.isArray(v)?v:[!!v,false,false];
+      S.p5=a(d.p5);S.p4=a(d.p4);S.p6=a(d.p6);S.guar=ag(d.gu);
+    }
   }catch(e){}
 }
 function save(){
-  try{localStorage.setItem('wish_genshin_v4',JSON.stringify({td:S.total,p5:S.p5,p4:S.p4,p6:S.p6,gu:S.guar,hi:S.hist.slice(-500),bn:S.bn,mu:S.muted}))}catch(e){}
+  try{localStorage.setItem('wish_genshin_v5',JSON.stringify({td:S.total,p5:S.p5,p4:S.p4,p6:S.p6,gu:S.guar,hi:S.hist.slice(-500),bn:S.bn,mu:S.muted}))}catch(e){}
 }
 
 /* ============================================================
