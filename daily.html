@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日签到 · 星穹祈愿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#080e20;--bg1:#0c142e;--bg2:#111b3a;
+  --gold:#D4B87A;--g2:#E8D5A3;--g3:#F5E6CC;--g4:#B89A50;
+  --purple:#B08FFF;--p2:#c8b0ff;
+  --panel:rgba(12,20,42,0.72);--pborder:rgba(212,184,122,0.32);
+  --text:#E8E0D0;--t2:#9999AA;
+  --ft:"Noto Serif SC","STSong","SimSun",serif;
+  --fu:"Inter","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow-x:hidden}
+body{
+  font-family:var(--fu);background:#05081a;color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+
+canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* Back arrow */
+.back-arrow{
+  position:fixed;top:28px;left:28px;z-index:10;
+  width:42px;height:42px;border-radius:50%;
+  background:rgba(18,22,40,0.65);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text);font-size:1.2rem;
+  transition:all 0.3s ease;text-decoration:none;
+}
+.back-arrow:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 24px rgba(212,184,122,0.15)}
+
+.page{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;
+  padding:80px 20px 60px;min-height:100vh;
+}
+
+.page-title{
+  font-family:var(--ft);font-size:2.2rem;font-weight:900;
+  background:linear-gradient(180deg,var(--g3),var(--gold),var(--g4));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;letter-spacing:0.1em;
+}
+.page-subtitle{font-size:0.85rem;color:var(--t2);letter-spacing:0.15em;margin-bottom:50px}
+
+/* Streak counter */
+.streak-info{
+  display:flex;align-items:center;gap:12px;margin-bottom:48px;
+  padding:14px 28px;border-radius:40px;
+  background:rgba(18,22,40,0.65);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.06);
+}
+.streak-info .flame{font-size:1.6rem}
+.streak-info .streak-text{font-size:0.9rem;color:var(--t2)}
+.streak-info .streak-num{
+  font-family:var(--ft);font-size:2rem;font-weight:900;color:var(--gold);
+  line-height:1;
+}
+
+/* Day ring — 7 nodes in arc */
+.days-ring{
+  position:relative;
+  width:100%;max-width:580px;
+  height:320px;
+  margin-bottom:48px;
+}
+.day-node{
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  transform:translate(-50%,-50%);
+  transition:transform 0.4s cubic-bezier(0.22,1,0.36,1),filter 0.4s ease;
+  cursor:default;
+}
+.day-node.today{cursor:pointer}
+.day-node.today:hover{transform:translate(-50%,-50%) scale(1.08)}
+.day-node .day-dot{
+  width:56px;height:56px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--ft);font-size:1.2rem;font-weight:700;
+  background:rgba(18,22,40,0.7);backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:1.5px solid rgba(255,255,255,0.08);
+  transition:all 0.4s ease;
+  position:relative;
+}
+.day-node.checked .day-dot{
+  background:radial-gradient(circle,rgba(212,184,122,0.2),rgba(18,22,40,0.7));
+  border-color:rgba(212,184,122,0.45);
+  box-shadow:0 0 28px rgba(212,184,122,0.25),0 0 0 1px rgba(212,184,122,0.1) inset;
+  color:var(--gold);
+}
+.day-node.today .day-dot{
+  border-color:var(--gold);
+  animation:pulse-dot 2s ease-in-out infinite;
+  box-shadow:0 0 32px rgba(212,184,122,0.4),0 0 0 2px rgba(212,184,122,0.15) inset;
+}
+@keyframes pulse-dot{
+  0%,100%{box-shadow:0 0 32px rgba(212,184,122,0.4),0 0 0 2px rgba(212,184,122,0.15) inset}
+  50%{box-shadow:0 0 52px rgba(212,184,122,0.65),0 0 0 3px rgba(212,184,122,0.25) inset}
+}
+.day-node.checked .day-dot::after{
+  content:'✓';position:absolute;top:-4px;right:-4px;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--gold);color:#05081a;font-size:0.6rem;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+}
+.day-node .day-label{font-size:0.7rem;color:var(--t2);letter-spacing:0.08em}
+.day-node.checked .day-label{color:var(--g2)}
+.day-node.today .day-label{color:var(--gold)}
+.day-node .day-reward{
+  font-size:0.7rem;color:var(--t2);opacity:0.7;
+  white-space:nowrap;
+}
+.day-node.checked .day-reward{color:var(--g2);opacity:0.9}
+
+/* Sign button */
+.sign-btn{
+  padding:16px 56px;border-radius:40px;
+  font-family:var(--ft);font-size:1.1rem;font-weight:700;letter-spacing:0.12em;
+  background:linear-gradient(135deg,rgba(212,184,122,0.15),rgba(184,154,80,0.2));
+  border:1.5px solid rgba(212,184,122,0.4);color:var(--gold);
+  cursor:pointer;transition:all 0.35s ease;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+}
+.sign-btn:hover{
+  background:linear-gradient(135deg,rgba(212,184,122,0.25),rgba(184,154,80,0.3));
+  border-color:var(--gold);box-shadow:0 0 40px rgba(212,184,122,0.2);
+  transform:translateY(-2px);
+}
+.sign-btn:active{transform:scale(0.96)}
+.sign-btn.done{
+  opacity:0.5;cursor:not-allowed;pointer-events:none;
+  border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:var(--t2);
+}
+
+/* Reward toast */
+.reward-toast{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  z-index:100;pointer-events:none;
+  padding:32px 48px;border-radius:20px;
+  background:rgba(18,22,40,0.9);backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(212,184,122,0.4);
+  box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 80px rgba(212,184,122,0.15);
+  text-align:center;
+  transition:transform 0.5s cubic-bezier(0.22,1,0.36,1),opacity 0.5s ease;
+  opacity:0;
+}
+.reward-toast.show{transform:translate(-50%,-50%) scale(1);opacity:1}
+.reward-toast .r-icon{font-size:3rem;margin-bottom:8px}
+.reward-toast .r-title{
+  font-family:var(--ft);font-size:1.3rem;font-weight:700;color:var(--gold);
+  margin-bottom:4px;
+}
+.reward-toast .r-amount{
+  font-size:2rem;font-weight:900;color:var(--g3);
+  font-family:var(--ft);
+}
+.reward-toast .r-hint{font-size:0.75rem;color:var(--t2);margin-top:8px}
+
+/* Total stats */
+.total-signs{
+  margin-top:36px;font-size:0.8rem;color:var(--t2);
+  letter-spacing:0.08em;
+}
+.total-signs span{color:var(--g2);font-weight:600}
+
+.footer{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  z-index:1;font-size:0.75rem;color:var(--t2);letter-spacing:0.1em;
+}
+
+@media(max-width:600px){
+  .page-title{font-size:1.6rem}
+  .days-ring{height:280px;max-width:100%}
+  .day-node .day-dot{width:44px;height:44px;font-size:1rem}
+  .sign-btn{padding:14px 40px;font-size:1rem}
+}
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<a href="index.html" class="back-arrow" title="返回主页">←</a>
+
+<main class="page">
+  <h1 class="page-title">每 日 签 到</h1>
+  <p class="page-subtitle">— DAILY CHECK-IN —</p>
+
+  <div class="streak-info">
+    <span class="flame">🔥</span>
+    <span class="streak-text">连续签到</span>
+    <span class="streak-num" id="streak-num">0</span>
+    <span class="streak-text">天</span>
+  </div>
+
+  <div class="days-ring" id="days-ring"></div>
+
+  <button class="sign-btn" id="sign-btn" onclick="doSign()">签 到</button>
+
+  <div class="total-signs">
+    累计签到 <span id="total-signs">0</span> 次
+  </div>
+</main>
+
+<footer class="footer">© 2026 星穹祈愿 — Stellar Wish</footer>
+
+<div class="reward-toast" id="reward-toast">
+  <div class="r-icon">✨</div>
+  <div class="r-title">签到成功</div>
+  <div class="r-amount" id="r-amount"></div>
+  <div class="r-hint">前往祈愿页面使用吧</div>
+</div>
+
+<script>
+(function(){
+/* ============================
+   Starfield (same as index)
+   ============================ */
+const c=document.getElementById('starfield');
+const ctx=c.getContext('2d');
+let w,h,stars=[],meteors=[];
+
+function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
+resize();window.addEventListener('resize',resize);
+
+for(let i=0;i<180;i++){
+  stars.push({
+    x:Math.random()*w,y:Math.random()*h,
+    r:Math.random()*1.6+0.3,
+    a:Math.random()*0.7+0.15,
+    s:Math.random()*0.003+0.001,
+    phase:Math.random()*Math.PI*2
+  });
+}
+
+function spawnMeteor(){
+  const edge=Math.floor(Math.random()*4);
+  let x,y,angle;
+  if(edge===0){x=Math.random()*w;y=-20;angle=-35+Math.random()*40}
+  else if(edge===1){x=w+20;y=Math.random()*h*0.7;angle=160+Math.random()*35}
+  else if(edge===2){x=Math.random()*w;y=h+20;angle=-160+Math.random()*30}
+  else{x=-20;y=Math.random()*h*0.7;angle=-10+Math.random()*35}
+  const rad=angle*Math.PI/180;
+  const speed=18+Math.random()*28;
+  const hue=Math.random()<0.08?270:Math.random()<0.25?34:48;
+  return {x,y,vx:Math.cos(rad)*speed,vy:-Math.sin(rad)*speed,hue:hue,life:1,decay:0.0025+Math.random()*0.0045,trail:[],trailMax:40+Math.floor(Math.random()*30)};
+}
+
+for(let i=0;i<8;i++){
+  const m=spawnMeteor();
+  m.life=0.15+Math.random()*0.85;
+  m.x-=m.vx*Math.random()*60;m.y-=m.vy*Math.random()*60;
+  meteors.push(m);
+}
+
+let spawnTimer=0;
+
+function draw(ts,dt){
+  const dts=Math.min(dt,0.1);
+  ctx.clearRect(0,0,w,h);
+  const now=Date.now()*0.001;
+  stars.forEach(s=>{
+    s.x+=s.s;if(s.x>w+5){s.x=-5;s.y=Math.random()*h}
+    const alpha=s.a+Math.sin(now+s.phase)*0.2;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(212,184,122,${Math.max(0,alpha)})`;
+    ctx.fill();
+  });
+  spawnTimer+=dts;
+  const count=Math.random()<0.25?2:1;
+  for(let k=0;k<count;k++){
+    if(spawnTimer>0.06+Math.random()*0.22){spawnTimer=0;meteors.push(spawnMeteor())}
+  }
+  ctx.globalCompositeOperation='lighter';
+  for(let i=meteors.length-1;i>=0;i--){
+    const m=meteors[i];
+    m.x+=m.vx*dts*60;m.y+=m.vy*dts*60;m.life-=m.decay*dts*60;
+    m.trail.push({x:m.x,y:m.y});
+    if(m.trail.length>m.trailMax)m.trail.shift();
+    if(m.life<=0||m.y>h+150||m.x<-150||m.x>w+150){meteors.splice(i,1);continue}
+    if(m.trail.length>1){
+      for(let j=1;j<m.trail.length;j++){
+        const t=j/m.trail.length;
+        const alpha=t*t*m.life*0.9;
+        const lw=t*7+0.5;
+        ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+        ctx.strokeStyle=`hsla(${m.hue},100%,85%,${alpha*0.25})`;ctx.lineWidth=lw+16;ctx.lineCap='round';ctx.stroke();
+        ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+        ctx.strokeStyle=`hsla(${m.hue},100%,95%,${alpha*0.5})`;ctx.lineWidth=lw+6;ctx.lineCap='round';ctx.stroke();
+        ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+        ctx.strokeStyle=`hsla(0,0%,100%,${alpha})`;ctx.lineWidth=lw;ctx.lineCap='round';ctx.stroke();
+      }
+    }
+    const a=m.life;
+    const g3=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,60);
+    g3.addColorStop(0,`hsla(${m.hue},100%,90%,${a*0.55})`);g3.addColorStop(0.25,`hsla(${m.hue},100%,80%,${a*0.25})`);
+    g3.addColorStop(0.6,`hsla(${m.hue},100%,65%,${a*0.06})`);g3.addColorStop(1,`hsla(${m.hue},100%,50%,0)`);
+    ctx.beginPath();ctx.arc(m.x,m.y,60,0,Math.PI*2);ctx.fillStyle=g3;ctx.fill();
+    const g2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,22);
+    g2.addColorStop(0,`hsla(${m.hue},100%,98%,${a*0.9})`);g2.addColorStop(0.35,`hsla(${m.hue},100%,85%,${a*0.5})`);
+    g2.addColorStop(0.7,`hsla(${m.hue},100%,70%,${a*0.12})`);g2.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
+    ctx.beginPath();ctx.arc(m.x,m.y,22,0,Math.PI*2);ctx.fillStyle=g2;ctx.fill();
+    const g1=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,9);
+    g1.addColorStop(0,'rgba(255,255,255,1)');g1.addColorStop(0.1,`hsla(${m.hue},100%,98%,1)`);
+    g1.addColorStop(0.4,`hsla(${m.hue},100%,85%,0.5)`);g1.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
+    ctx.beginPath();ctx.arc(m.x,m.y,9,0,Math.PI*2);ctx.fillStyle=g1;ctx.fill();
+  }
+  ctx.globalCompositeOperation='source-over';
+}
+
+let lastTime=0;
+function loop(ts){
+  const dt=lastTime?(ts-lastTime)/1000:0.016;lastTime=ts;
+  draw(ts,dt);requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================
+   Daily Check-in Logic
+   ============================ */
+const REWARDS=[
+  {icon:'🌠',name:'纠缠之缘',amount:1},
+  {icon:'✨',name:'相遇之缘',amount:2},
+  {icon:'🌠',name:'纠缠之缘',amount:3},
+  {icon:'✨',name:'相遇之缘',amount:4},
+  {icon:'🌠',name:'纠缠之缘',amount:5},
+  {icon:'✨',name:'相遇之缘',amount:6},
+  {icon:'🌠',name:'纠缠之缘',amount:10},
+];
+
+const DAY_LABELS=['一','二','三','四','五','六','日'];
+
+let state={lastDate:'',streak:0,totalSign:0};
+
+function loadState(){
+  try{
+    const d=JSON.parse(localStorage.getItem('wish_daily_v1'));
+    if(d){state.lastDate=d.ld||'';state.streak=d.sk||0;state.totalSign=d.ts||0}
+  }catch(e){}
+}
+function saveState(){
+  try{localStorage.setItem('wish_daily_v1',JSON.stringify({ld:state.lastDate,sk:state.streak,ts:state.totalSign}))}catch(e){}
+}
+
+function todayStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function canSign(){
+  const today=todayStr();
+  if(state.lastDate===today)return false;
+  // Check if yesterday was signed (maintain streak)
+  const yesterday=new Date();
+  yesterday.setDate(yesterday.getDate()-1);
+  const ys=`${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+  if(state.lastDate===ys)return true;
+  // New streak (not signed yesterday, or first time)
+  return true;
+}
+
+function renderDays(){
+  const ring=document.getElementById('days-ring');
+  const today=todayStr();
+  const signed=state.lastDate===today;
+  const streak=state.streak; // 0-6, which day we're on
+
+  ring.innerHTML='';
+
+  for(let i=0;i<7;i++){
+    const node=document.createElement('div');
+    node.className='day-node';
+
+    // Position in a gentle arc
+    const t=i/6;
+    const angle=-150+(t*300); // degrees, arc from -150 to +150
+    const rad=angle*Math.PI/180;
+    const rx=260,ry=100;
+    const cx=290,cy=140;
+    const x=cx+rx*Math.cos(rad);
+    const y=cy-ry*Math.sin(rad)*(1-Math.abs(angle)/180*0.5);
+
+    node.style.left=x+'px';
+    node.style.top=y+'px';
+
+    // Determine state
+    if(signed && i<streak+1){
+      // Already signed this day (in current streak)
+      node.classList.add('checked');
+    }else if(!signed && i<streak){
+      // Previously signed days
+      node.classList.add('checked');
+    }else if((!signed && i===streak) || (signed && i===streak+1 && i<7)){
+      // Today's available day
+      node.classList.add('today');
+    }
+
+    node.innerHTML=`
+      <div class="day-dot">${i+1}</div>
+      <div class="day-label">周${DAY_LABELS[i]}</div>
+      <div class="day-reward">${REWARDS[i].icon} ×${REWARDS[i].amount}</div>
+    `;
+
+    if(node.classList.contains('today') && !signed){
+      node.addEventListener('click',doSign);
+    }
+
+    ring.appendChild(node);
+  }
+
+  // Update streak display
+  document.getElementById('streak-num').textContent=state.streak;
+  document.getElementById('total-signs').textContent=state.totalSign;
+
+  // Sign button state
+  const btn=document.getElementById('sign-btn');
+  if(signed){
+    btn.classList.add('done');
+    btn.textContent='今日已签';
+  }else{
+    btn.classList.remove('done');
+    btn.textContent='签 到';
+  }
+}
+
+function doSign(){
+  if(!canSign())return;
+
+  const today=todayStr();
+  const yesterday=new Date();
+  yesterday.setDate(yesterday.getDate()-1);
+  const ys=`${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+
+  // Determine streak
+  if(state.lastDate===ys){
+    // Continuing streak
+    state.streak=(state.streak+1)%7;
+  }else{
+    // New streak
+    state.streak=0;
+  }
+  state.lastDate=today;
+  state.totalSign++;
+  saveState();
+
+  // Show reward
+  const reward=REWARDS[state.streak];
+  showRewardToast(reward);
+
+  // Re-render
+  renderDays();
+
+  // Update wish.html fate if same origin
+  try{
+    const fateData=JSON.stringify({icon:reward.icon,name:reward.name,amount:reward.amount});
+    localStorage.setItem('wish_daily_reward',fateData);
+  }catch(e){}
+}
+
+function showRewardToast(reward){
+  const toast=document.getElementById('reward-toast');
+  document.getElementById('r-amount').textContent=`${reward.icon} ${reward.name} ×${reward.amount}`;
+  toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2500);
+}
+
+// Init
+loadState();
+renderDays();
+})();
+</script>
+
+</body>
+</html>

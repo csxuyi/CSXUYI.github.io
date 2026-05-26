@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据统计 · 星穹祈愿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#080e20;--bg1:#0c142e;--bg2:#111b3a;
+  --gold:#D4B87A;--g2:#E8D5A3;--g3:#F5E6CC;--g4:#B89A50;
+  --purple:#B08FFF;--p2:#c8b0ff;
+  --panel:rgba(12,20,42,0.72);
+  --text:#E8E0D0;--t2:#9999AA;
+  --ft:"Noto Serif SC","STSong","SimSun",serif;
+  --fu:"Inter","PingFang SC","Microsoft YaHei",sans-serif;
+  --s6:#FFB8C6;--s5:#D4B87A;--s4:#B08FFF;--s3:#5B7A9A;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow-x:hidden}
+body{
+  font-family:var(--fu);background:#05081a;color:var(--text);
+  -webkit-font-smoothing:antialiased;min-height:100vh;
+}
+
+canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.back-arrow{
+  position:fixed;top:28px;left:28px;z-index:10;
+  width:42px;height:42px;border-radius:50%;
+  background:rgba(18,22,40,0.65);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text);font-size:1.2rem;
+  transition:all 0.3s ease;text-decoration:none;
+}
+.back-arrow:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 24px rgba(212,184,122,0.15)}
+
+.page{
+  position:relative;z-index:1;
+  padding:80px 20px 60px;max-width:860px;margin:0 auto;
+}
+
+.page-title{
+  font-family:var(--ft);font-size:2.2rem;font-weight:900;text-align:center;
+  background:linear-gradient(180deg,var(--g3),var(--gold),var(--g4));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;letter-spacing:0.1em;
+}
+.page-subtitle{text-align:center;font-size:0.85rem;color:var(--t2);letter-spacing:0.15em;margin-bottom:50px}
+
+/* Glass card */
+.glass-card{
+  border-radius:20px;padding:28px;
+  background:rgba(18,22,40,0.65);backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(255,255,255,0.06);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.03) inset;
+  margin-bottom:24px;
+}
+.glass-card h3{
+  font-family:var(--ft);font-size:1.1rem;margin-bottom:20px;
+  color:var(--g2);letter-spacing:0.06em;
+}
+
+/* Top stat numbers */
+.top-stats{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.top-stats .stat-num-card{
+  flex:1;min-width:120px;text-align:center;padding:24px 16px;
+}
+.top-stats .stat-value{
+  font-family:var(--ft);font-size:2.4rem;font-weight:900;color:var(--gold);
+  line-height:1.2;
+}
+.top-stats .stat-label{font-size:0.78rem;color:var(--t2);margin-top:4px;letter-spacing:0.06em}
+
+/* Donut chart area */
+.chart-row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.chart-row .chart-box{flex:1;min-width:280px}
+.chart-row .legend-box{flex:1;min-width:220px;display:flex;flex-direction:column;gap:12px;justify-content:center}
+
+.legend-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;background:rgba(255,255,255,0.02);transition:background 0.2s}
+.legend-item:hover{background:rgba(255,255,255,0.04)}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.legend-dot.s6{background:var(--s6);box-shadow:0 0 10px rgba(255,184,198,0.5)}
+.legend-dot.s5{background:var(--s5);box-shadow:0 0 10px rgba(212,184,122,0.5)}
+.legend-dot.s4{background:var(--s4);box-shadow:0 0 10px rgba(176,143,255,0.5)}
+.legend-dot.s3{background:var(--s3);box-shadow:0 0 10px rgba(91,122,154,0.4)}
+.legend-info{flex:1}
+.legend-name{font-size:0.85rem;font-weight:600}
+.legend-count{font-size:0.75rem;color:var(--t2)}
+.legend-pct{font-size:1.1rem;font-weight:700;font-family:var(--ft)}
+
+/* Pity bars */
+.pity-row{display:flex;gap:20px;flex-wrap:wrap}
+.pity-item{flex:1;min-width:200px}
+.pity-bar-outer{
+  height:8px;border-radius:4px;background:rgba(255,255,255,0.05);
+  margin-top:6px;overflow:hidden;
+}
+.pity-bar-inner{
+  height:100%;border-radius:4px;transition:width 0.6s ease;
+}
+.pity-bar-inner.s5-bar{background:linear-gradient(90deg,transparent,var(--gold))}
+.pity-bar-inner.s4-bar{background:linear-gradient(90deg,transparent,var(--purple))}
+.pity-bar-inner.s6-bar{background:linear-gradient(90deg,transparent,var(--s6))}
+.pity-label{font-size:0.78rem;color:var(--t2)}
+.pity-num{font-size:1.3rem;font-weight:700;font-family:var(--ft);margin-top:2px}
+.pity-num.s5{color:var(--gold)}.pity-num.s4{color:var(--purple)}.pity-num.s6{color:var(--s6)}
+.pity-max{font-size:0.7rem;color:var(--t2);float:right;line-height:2}
+
+/* Collection */
+.collection-bar-outer{
+  height:10px;border-radius:5px;background:rgba(255,255,255,0.05);
+  margin-top:8px;overflow:hidden;
+}
+.collection-bar-inner{
+  height:100%;border-radius:5px;
+  background:linear-gradient(90deg,var(--purple),var(--gold));
+  transition:width 0.6s ease;
+}
+.collection-text{font-size:0.85rem;margin-top:8px;color:var(--t2)}
+.collection-text span{color:var(--g2);font-weight:600}
+
+/* History timeline */
+.hist-list{max-height:360px;overflow-y:auto}
+.hist-list::-webkit-scrollbar{width:4px}
+.hist-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+.hist-item{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  border-radius:10px;margin-bottom:4px;
+  transition:background 0.2s;
+}
+.hist-item:hover{background:rgba(255,255,255,0.03)}
+.hist-item .h-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hist-item .h-dot.s6{background:var(--s6)}
+.hist-item .h-dot.s5{background:var(--s5)}
+.hist-item .h-dot.s4{background:var(--s4)}
+.hist-item .h-dot.s3{background:var(--s3)}
+.hist-item .h-star{font-size:0.8rem;letter-spacing:2px;flex-shrink:0;width:48px}
+.hist-item .h-name{flex:1;font-size:0.85rem}
+.hist-item .h-time{font-size:0.72rem;color:var(--t2);flex-shrink:0}
+
+.empty-state{
+  text-align:center;padding:40px;color:var(--t2);
+  font-size:0.9rem;
+}
+
+.footer{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  z-index:1;font-size:0.75rem;color:var(--t2);letter-spacing:0.1em;
+}
+
+@media(max-width:600px){
+  .page-title{font-size:1.6rem}
+  .top-stats .stat-value{font-size:1.8rem}
+  .chart-row{flex-direction:column}
+  .pity-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<canvas id="starfield"></canvas>
+
+<a href="index.html" class="back-arrow" title="返回主页">←</a>
+
+<main class="page">
+  <h1 class="page-title">数 据 统 计</h1>
+  <p class="page-subtitle">— STATISTICS —</p>
+
+  <!-- Top numbers -->
+  <div class="top-stats" id="top-stats">
+    <div class="glass-card stat-num-card">
+      <div class="stat-value" id="stat-total">0</div>
+      <div class="stat-label">总抽卡次数</div>
+    </div>
+    <div class="glass-card stat-num-card">
+      <div class="stat-value" id="stat-banners">0</div>
+      <div class="stat-label">涉足卡池</div>
+    </div>
+    <div class="glass-card stat-num-card">
+      <div class="stat-value" id="stat-collected">0/21</div>
+      <div class="stat-label">卡牌收集</div>
+    </div>
+  </div>
+
+  <!-- Donut chart + legend -->
+  <div class="glass-card">
+    <h3>稀有度分布</h3>
+    <div class="chart-row">
+      <div class="chart-box">
+        <canvas id="donut" width="280" height="280"></canvas>
+      </div>
+      <div class="legend-box" id="legend-box"></div>
+    </div>
+  </div>
+
+  <!-- Pity progress -->
+  <div class="glass-card">
+    <h3>保底进度</h3>
+    <div class="pity-row" id="pity-row"></div>
+  </div>
+
+  <!-- Collection -->
+  <div class="glass-card">
+    <h3>收集进度</h3>
+    <div class="collection-bar-outer">
+      <div class="collection-bar-inner" id="collection-bar" style="width:0%"></div>
+    </div>
+    <div class="collection-text" id="collection-text"></div>
+  </div>
+
+  <!-- Recent history -->
+  <div class="glass-card">
+    <h3>最近祈愿</h3>
+    <div class="hist-list" id="hist-list"></div>
+  </div>
+</main>
+
+<footer class="footer">© 2026 星穹祈愿 — Stellar Wish</footer>
+
+<script>
+(function(){
+/* ============================
+   Starfield (simplified)
+   ============================ */
+const c=document.getElementById('starfield');
+const ctx=c.getContext('2d');
+let w,h,stars=[];
+
+function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
+resize();window.addEventListener('resize',resize);
+
+for(let i=0;i<200;i++){
+  stars.push({
+    x:Math.random()*w,y:Math.random()*h,
+    r:Math.random()*1.6+0.3,
+    a:Math.random()*0.6+0.15,
+    s:Math.random()*0.002+0.0005,
+    phase:Math.random()*Math.PI*2
+  });
+}
+
+let meteors=[],spawnTimer=0;
+
+function spawnMeteor(){
+  const edge=Math.floor(Math.random()*4);
+  let x,y,angle;
+  if(edge===0){x=Math.random()*w;y=-20;angle=-35+Math.random()*40}
+  else if(edge===1){x=w+20;y=Math.random()*h*0.7;angle=160+Math.random()*35}
+  else if(edge===2){x=Math.random()*w;y=h+20;angle=-160+Math.random()*30}
+  else{x=-20;y=Math.random()*h*0.7;angle=-10+Math.random()*35}
+  const rad=angle*Math.PI/180;
+  const speed=18+Math.random()*28;
+  const hue=Math.random()<0.08?270:Math.random()<0.25?34:48;
+  return {x,y,vx:Math.cos(rad)*speed,vy:-Math.sin(rad)*speed,hue:hue,life:1,decay:0.0025+Math.random()*0.0045,trail:[],trailMax:35+Math.floor(Math.random()*25)};
+}
+
+for(let i=0;i<5;i++){
+  const m=spawnMeteor();
+  m.life=0.15+Math.random()*0.85;
+  m.x-=m.vx*Math.random()*60;m.y-=m.vy*Math.random()*60;
+  meteors.push(m);
+}
+
+function draw(ts,dt){
+  const dts=Math.min(dt,0.1);
+  ctx.clearRect(0,0,w,h);
+  const now=Date.now()*0.001;
+  stars.forEach(s=>{
+    s.x+=s.s;if(s.x>w+5){s.x=-5;s.y=Math.random()*h}
+    const alpha=s.a+Math.sin(now+s.phase)*0.15;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(212,184,122,${Math.max(0,alpha)})`;
+    ctx.fill();
+  });
+  spawnTimer+=dts;
+  if(spawnTimer>0.08+Math.random()*0.3){spawnTimer=0;meteors.push(spawnMeteor())}
+  ctx.globalCompositeOperation='lighter';
+  for(let i=meteors.length-1;i>=0;i--){
+    const m=meteors[i];
+    m.x+=m.vx*dts*60;m.y+=m.vy*dts*60;m.life-=m.decay*dts*60;
+    m.trail.push({x:m.x,y:m.y});
+    if(m.trail.length>m.trailMax)m.trail.shift();
+    if(m.life<=0||m.y>h+150||m.x<-150||m.x>w+150){meteors.splice(i,1);continue}
+    if(m.trail.length>1){
+      for(let j=1;j<m.trail.length;j++){
+        const t=j/m.trail.length;const alpha=t*t*m.life*0.7;const lw=t*5+0.3;
+        ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+        ctx.strokeStyle=`hsla(${m.hue},100%,85%,${alpha*0.2})`;ctx.lineWidth=lw+12;ctx.lineCap='round';ctx.stroke();
+        ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+        ctx.strokeStyle=`hsla(${m.hue},100%,95%,${alpha*0.4})`;ctx.lineWidth=lw+4;ctx.lineCap='round';ctx.stroke();
+        ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
+        ctx.strokeStyle=`hsla(0,0%,100%,${alpha})`;ctx.lineWidth=lw;ctx.lineCap='round';ctx.stroke();
+      }
+    }
+    const a=m.life;
+    const g2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,18);
+    g2.addColorStop(0,`hsla(${m.hue},100%,98%,${a*0.8})`);g2.addColorStop(0.35,`hsla(${m.hue},100%,85%,${a*0.4})`);
+    g2.addColorStop(0.7,`hsla(${m.hue},100%,70%,${a*0.08})`);g2.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
+    ctx.beginPath();ctx.arc(m.x,m.y,18,0,Math.PI*2);ctx.fillStyle=g2;ctx.fill();
+  }
+  ctx.globalCompositeOperation='source-over';
+}
+
+let lastTime=0;
+function loop(ts){
+  const dt=lastTime?(ts-lastTime)/1000:0.016;lastTime=ts;
+  draw(ts,dt);requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================
+   Stats Logic
+   ============================ */
+const RARITY_COLORS={6:'#FFB8C6',5:'#D4B87A',4:'#B08FFF',3:'#5B7A9A'};
+const RARITY_LABELS={6:'6★',5:'5★',4:'4★',3:'3★'};
+const RARITY_CLASS={6:'s6',5:'s5',4:'s4',3:'s3'};
+const PITY_MAX={6:180,5:90,4:10};
+const TOTAL_CARDS=21;
+
+function loadData(){
+  try{
+    const raw=localStorage.getItem('wish_genshin_v5');
+    if(!raw)return null;
+    const d=JSON.parse(raw);
+    return {
+      total:d.td||0,
+      history:d.hi||[],
+      bn:d.bn||0,
+      p5:Array.isArray(d.p5)?d.p5:[d.p5||0,0,0],
+      p4:Array.isArray(d.p4)?d.p4:[d.p4||0,0,0],
+      p6:Array.isArray(d.p6)?d.p6:[d.p6||0,0,0],
+    };
+  }catch(e){return null}
+}
+
+function countRarities(history){
+  const counts={6:0,5:0,4:0,3:0};
+  history.forEach(h=>{if(counts[h.rarity]!==undefined)counts[h.rarity]++});
+  return counts;
+}
+
+function getBanners(history){
+  const set=new Set();
+  history.forEach(h=>set.add(h.bn));
+  return set.size;
+}
+
+function getCollected(history){
+  const set=new Set();
+  history.forEach(h=>{if(h.card&&h.card.id)set.add(h.card.id)});
+  return set.size;
+}
+
+function renderAll(){
+  const data=loadData();
+  if(!data||!data.history.length){
+    document.getElementById('stat-total').textContent='0';
+    document.getElementById('stat-banners').textContent='0';
+    document.getElementById('stat-collected').textContent='0/21';
+    document.getElementById('legend-box').innerHTML='';
+    document.getElementById('pity-row').innerHTML='';
+    document.getElementById('collection-text').textContent='暂无抽卡数据';
+    document.getElementById('hist-list').innerHTML='<div class="empty-state">— 前往祈愿页面开始抽卡 —</div>';
+    drawDonut([100],['#222']);
+    return;
+  }
+
+  const counts=countRarities(data.history);
+  const total=data.total||data.history.length;
+  const banners=getBanners(data.history);
+  const collected=getCollected(data.history);
+
+  // Top stats
+  document.getElementById('stat-total').textContent=total;
+  document.getElementById('stat-banners').textContent=banners;
+  document.getElementById('stat-collected').textContent=`${collected}/${TOTAL_CARDS}`;
+
+  // Donut
+  const order=[6,5,4,3];
+  const values=order.map(r=>counts[r]);
+  const colors=order.map(r=>RARITY_COLORS[r]);
+  const allZero=values.every(v=>v===0);
+  drawDonut(allZero?[100]:values,allZero?['#222']:colors);
+
+  // Legend
+  const legendBox=document.getElementById('legend-box');
+  legendBox.innerHTML=order.map(r=>{
+    const pct=total>0?(counts[r]/total*100).toFixed(1):'0.0';
+    return `<div class="legend-item">
+      <div class="legend-dot ${RARITY_CLASS[r]}"></div>
+      <div class="legend-info">
+        <div class="legend-name">${RARITY_LABELS[r]}</div>
+        <div class="legend-count">${counts[r]} 张</div>
+      </div>
+      <div class="legend-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // Pity bars
+  const pityRow=document.getElementById('pity-row');
+  const bn=data.bn;
+  const banners_l=['角色活动','光锥活动','常驻'];
+  const pities=[
+    {r:5,cur:data.p5[bn]||0,max:PITY_MAX[5],label:'5★保底',cls:'s5'},
+    {r:4,cur:data.p4[bn]||0,max:PITY_MAX[4],label:'4★保底',cls:'s4'},
+    {r:6,cur:data.p6[bn]||0,max:PITY_MAX[6],label:'6★保底',cls:'s6'},
+  ];
+  pityRow.innerHTML=pities.map(p=>`
+    <div class="pity-item">
+      <div class="pity-label">${p.label} <span class="pity-max">${p.cur}/${p.max}</span></div>
+      <div class="pity-bar-outer">
+        <div class="pity-bar-inner ${p.cls}-bar" style="width:${Math.min(p.cur/p.max*100,100)}%"></div>
+      </div>
+      <div class="pity-num ${p.cls}">${p.cur} <span style="font-size:0.7rem;color:var(--t2)">抽</span></div>
+    </div>
+  `).join('');
+
+  // Collection bar
+  const collPct=collected/TOTAL_CARDS*100;
+  document.getElementById('collection-bar').style.width=collPct+'%';
+  document.getElementById('collection-text').innerHTML=`已收集 <span>${collected}</span> / ${TOTAL_CARDS} 张卡牌 (<span>${collPct.toFixed(1)}%</span>)`;
+
+  // History timeline
+  const histList=document.getElementById('hist-list');
+  histList.innerHTML=data.history.slice(0,30).map(h=>{
+    const d=new Date(h.t);
+    const ts=`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const stars='★'.repeat(h.rarity);
+    const name=h.card&&h.card.name?h.card.name:'未知卡牌';
+    return `<div class="hist-item">
+      <div class="h-dot ${RARITY_CLASS[h.rarity]}"></div>
+      <div class="h-star">${stars}</div>
+      <div class="h-name">${name}</div>
+      <div class="h-time">${ts}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================
+   Donut Chart
+   ============================ */
+function drawDonut(values,colors){
+  const canvas=document.getElementById('donut');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const size=280;
+  canvas.width=size*dpr;
+  canvas.height=size*dpr;
+  canvas.style.width=size+'px';
+  canvas.style.height=size+'px';
+  ctx.scale(dpr,dpr);
+
+  const total=values.reduce((a,b)=>a+b,0);
+  const cx=size/2,cy=size/2,outerR=110,innerR=62;
+  let angle=-Math.PI/2;
+
+  if(total===0||(values.length===1&&values[0]===100&&colors[0]==='#222')){
+    // Empty state
+    ctx.beginPath();ctx.arc(cx,cy,outerR,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.03)';ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,innerR,0,Math.PI*2);
+    ctx.fillStyle='#05081a';ctx.fill();
+    ctx.fillStyle='#555';ctx.font='14px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('暂无数据',cx,cy);
+    return;
+  }
+
+  for(let i=0;i<values.length;i++){
+    if(values[i]===0)continue;
+    const slice=values[i]/total*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(cx,cy,outerR,angle,angle+slice);
+    ctx.arc(cx,cy,innerR,angle+slice,angle,true);
+    ctx.closePath();
+    ctx.fillStyle=colors[i];
+    ctx.fill();
+
+    // Label on slice
+    const mid=angle+slice/2;
+    const lx=cx+Math.cos(mid)*(innerR+(outerR-innerR)/1.6);
+    const ly=cy+Math.sin(mid)*(innerR+(outerR-innerR)/1.6);
+    const pct=(values[i]/total*100).toFixed(1);
+    if(pct>'3'){
+      ctx.fillStyle='#fff';ctx.font='bold 13px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(pct+'%',lx,ly);
+    }
+
+    angle+=slice;
+  }
+
+  // Center hole — total
+  ctx.beginPath();ctx.arc(cx,cy,innerR,0,Math.PI*2);
+  ctx.fillStyle='#05081a';ctx.fill();
+  // Stroke inner ring
+  ctx.beginPath();ctx.arc(cx,cy,innerR,0,Math.PI*2);
+  ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();
+
+  ctx.fillStyle='#E8E0D0';ctx.font='bold 28px "Noto Serif SC",serif';ctx.textAlign='center';
+  ctx.fillText(total+'',cx,cy-6);
+  ctx.fillStyle='#9999AA';ctx.font='12px Inter,sans-serif';
+  ctx.fillText('总抽卡数',cx,cy+22);
+}
+
+// Init
+renderAll();
+window.addEventListener('resize',()=>{
+  // Re-draw donut on resize
+  renderAll();
+});
+})();
+</script>
+
+</body>
+</html>

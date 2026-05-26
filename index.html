@@ -44,11 +44,11 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 }
 
 .portals{
-  display:flex;gap:32px;flex-wrap:wrap;justify-content:center;
-  max-width:700px;width:100%;
+  display:flex;gap:24px;flex-wrap:wrap;justify-content:center;
+  max-width:900px;width:100%;
 }
 .portal{
-  flex:1;min-width:260px;max-width:320px;
+  flex:1;min-width:200px;max-width:240px;
   padding:40px 28px;border-radius:24px;
   background:rgba(18,22,40,0.65);backdrop-filter:blur(20px) saturate(140%);
   -webkit-backdrop-filter:blur(20px) saturate(140%);
@@ -71,10 +71,14 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 }
 .portal.wish .portal-icon{background:radial-gradient(circle,rgba(212,184,122,0.15),transparent);border-color:rgba(212,184,122,0.3)}
 .portal.cards .portal-icon{background:radial-gradient(circle,rgba(176,143,255,0.12),transparent);border-color:rgba(176,143,255,0.25)}
+.portal.daily .portal-icon{background:radial-gradient(circle,rgba(255,180,100,0.12),transparent);border-color:rgba(255,180,100,0.25)}
+.portal.stats .portal-icon{background:radial-gradient(circle,rgba(130,200,230,0.12),transparent);border-color:rgba(130,200,230,0.25)}
 
 .portal h2{font-family:var(--ft);font-size:1.4rem;font-weight:700}
 .portal.wish h2{background:linear-gradient(180deg,var(--g3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .portal.cards h2{background:linear-gradient(180deg,var(--p2),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.portal.daily h2{background:linear-gradient(180deg,#FFCC99,#FF9966);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.portal.stats h2{background:linear-gradient(180deg,#99DDFF,#55AADD);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 .portal p{font-size:0.85rem;color:var(--t2);line-height:1.6}
 
@@ -116,6 +120,18 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
       <div class="portal-icon">🂠</div>
       <h2>卡牌图鉴</h2>
       <p>浏览全部收藏，细品每一张<br>卡牌背后的故事与灵魂</p>
+      <span class="portal-arrow">进入 →</span>
+    </a>
+    <a href="daily.html" class="portal daily">
+      <div class="portal-icon">🌅</div>
+      <h2>每日签到</h2>
+      <p>每日登录领取星轨馈赠<br>连续签到大奖等你来拿</p>
+      <span class="portal-arrow">进入 →</span>
+    </a>
+    <a href="stats.html" class="portal stats">
+      <div class="portal-icon">📊</div>
+      <h2>数据统计</h2>
+      <p>回顾祈愿历程，一览数据<br>收集进度与稀有度分布</p>
       <span class="portal-arrow">进入 →</span>
     </a>
   </div>
