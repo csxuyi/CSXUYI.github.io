@@ -149,10 +149,74 @@ html,body{
   letter-spacing:0.1em;
 }
 
+/* ===== Portal auto-fade: dim when mouse is away ===== */
+.hero .logo,.hero .subtitle,.hero .portals{
+  transition:opacity 0.8s ease;
+}
+.hero.dimmed .logo{opacity:0.25}
+.hero.dimmed .subtitle{opacity:0.18}
+.hero.dimmed .portals{opacity:0.12;pointer-events:none}
+.hero.dimmed .portals:hover{opacity:0.12}
+
+/* ===== Guestbook ===== */
+.guestbook-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;
+  transition:transform 0.45s cubic-bezier(0.22,1,0.36,1);
+  transform:translateY(calc(100% - 44px));
+}
+.guestbook-bar.open{transform:translateY(0)}
+
+.guestbook-toggle{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 24px;border-radius:14px 14px 0 0;
+  background:rgba(18,22,40,0.35);
+  backdrop-filter:blur(14px) saturate(150%) brightness(1.05);
+  -webkit-backdrop-filter:blur(14px) saturate(150%) brightness(1.05);
+  border-top:1px solid rgba(255,255,255,0.14);
+  border-left:1px solid rgba(255,255,255,0.10);
+  border-right:1px solid rgba(255,255,255,0.05);
+  color:var(--g2);font-family:var(--ft);font-size:0.85rem;
+  letter-spacing:2px;cursor:pointer;user-select:none;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.3);
+  transition:all 0.3s ease;
+}
+.guestbook-toggle:hover{
+  border-top-color:rgba(255,255,255,0.22);
+  background:rgba(18,22,40,0.45);
+  box-shadow:0 -6px 28px rgba(0,0,0,0.4),0 0 20px rgba(212,184,122,0.06);
+}
+.guestbook-arrow{
+  display:inline-block;transition:transform 0.35s ease;
+  font-size:0.7rem;
+}
+.guestbook-bar.open .guestbook-arrow{transform:rotate(180deg)}
+
+.guestbook-body{
+  width:100%;max-width:800px;max-height:55vh;overflow-y:auto;
+  padding:20px 24px;
+  background:rgba(12,18,38,0.42);
+  backdrop-filter:blur(18px) saturate(150%) brightness(1.05);
+  -webkit-backdrop-filter:blur(18px) saturate(150%) brightness(1.05);
+  border-top:1px solid rgba(255,255,255,0.08);
+  border-left:1px solid rgba(255,255,255,0.04);
+  border-right:1px solid rgba(255,255,255,0.02);
+  box-shadow:0 -8px 32px rgba(0,0,0,0.4);
+}
+.guestbook-body::-webkit-scrollbar{width:3px}
+.guestbook-body::-webkit-scrollbar-thumb{background:rgba(212,184,122,0.18);border-radius:2px}
+.guestbook-body h3{
+  font-family:var(--ft);font-size:1.1rem;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:16px;text-align:center;letter-spacing:2px;
+}
+
 @media(max-width:600px){
   .hero .logo{font-size:2.2rem}
   .portals{gap:20px}
   .portal{padding:30px 20px}
+  .guestbook-body{max-height:45vh;padding:16px}
 }
 </style>
 </head>
@@ -194,6 +258,17 @@ html,body{
 </main>
 
 <footer class="footer">© 2026 星穹祈愿 — Stellar Wish</footer>
+
+<!-- ===== Guestbook ===== -->
+<div class="guestbook-bar" id="guestbook-bar">
+  <button class="guestbook-toggle" id="guestbook-toggle">
+    💬 留言板 <span class="guestbook-arrow">▾</span>
+  </button>
+  <div class="guestbook-body" id="guestbook-body">
+    <h3>— 星穹留言 —</h3>
+    <div id="giscus-container"></div>
+  </div>
+</div>
 
 <script>
 function project3D(x,y,z,vars){
@@ -595,6 +670,89 @@ frame();
     }
 
     requestAnimationFrame(animateWarp);
+  }
+})();
+</script>
+
+<script>
+/* ==============================================
+   Portal auto-fade + Guestbook toggle
+   ============================================== */
+(function(){
+  var hero = document.querySelector('.hero');
+  var guestbookBar = document.getElementById('guestbook-bar');
+  var guestbookToggle = document.getElementById('guestbook-toggle');
+  var giscusLoaded = false;
+
+  // ---- Portal fade ----
+  var dimTimer = null;
+  var DIM_DELAY = 1800;
+
+  function undim(){
+    hero.classList.remove('dimmed');
+    resetTimer();
+  }
+
+  function resetTimer(){
+    clearTimeout(dimTimer);
+    dimTimer = setTimeout(function(){ hero.classList.add('dimmed'); }, DIM_DELAY);
+  }
+
+  // Mouse enters hero area — immediately show
+  hero.addEventListener('mouseenter', undim);
+  // Mouse moves anywhere on the page — reset the fade countdown
+  document.addEventListener('mousemove', function(e){
+    if(hero.contains(e.target)){
+      undim();
+    }else{
+      resetTimer();
+    }
+  });
+  // Start the timer on page load
+  resetTimer();
+
+  // ---- Guestbook toggle ----
+  guestbookToggle.addEventListener('click', function(){
+    var isOpen = guestbookBar.classList.contains('open');
+    if(isOpen){
+      guestbookBar.classList.remove('open');
+    }else{
+      guestbookBar.classList.add('open');
+      if(!giscusLoaded) loadGiscus();
+    }
+  });
+
+  function loadGiscus(){
+    giscusLoaded = true;
+    var container = document.getElementById('giscus-container');
+    // Show loading hint
+    container.innerHTML = '<p style="text-align:center;color:var(--t2);font-size:0.85rem;padding:20px">正在加载留言系统...</p>';
+
+    var script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    script.setAttribute('data-repo', 'csxuyi/CSXUYI.github.io');
+    script.setAttribute('data-repo-id', 'R_kgDOSl85kg');
+    script.setAttribute('data-category', 'General');
+    script.setAttribute('data-category-id', 'DIC_kwDOSl85ks4C99iu');
+    script.setAttribute('data-mapping', 'pathname');
+    script.setAttribute('data-strict', '0');
+    script.setAttribute('data-reactions-enabled', '1');
+    script.setAttribute('data-emit-metadata', '0');
+    script.setAttribute('data-input-position', 'bottom');
+    script.setAttribute('data-theme', 'dark');
+    script.setAttribute('data-lang', 'zh-CN');
+    script.setAttribute('data-loading', 'lazy');
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+
+    script.onload = function(){
+      // giscus will replace the container content
+    };
+    script.onerror = function(){
+      container.innerHTML = '<p style="text-align:center;color:var(--t2);font-size:0.85rem;padding:20px">留言系统加载失败。请确认已在 GitHub 仓库中启用 Discussions 功能，并到 <a href="https://giscus.app" style="color:var(--gold)" target="_blank">giscus.app</a> 完成配置。</p>';
+    };
+
+    container.appendChild(script);
   }
 })();
 </script>
