@@ -151,7 +151,10 @@ html,body{
 
 /* ===== Portal auto-fade: dim when mouse is away ===== */
 .hero .logo,.hero .subtitle,.hero .portals{
-  transition:opacity 0.8s ease;
+  transition:opacity 0.8s ease; /* slow fade-out */
+}
+.hero:not(.dimmed) .logo,.hero:not(.dimmed) .subtitle,.hero:not(.dimmed) .portals{
+  transition:opacity 0.2s ease; /* fast fade-in */
 }
 .hero.dimmed .logo{opacity:0.25}
 .hero.dimmed .subtitle{opacity:0.18}
