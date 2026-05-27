@@ -74,8 +74,8 @@ html,body{
     radial-gradient(ellipse 200px 250px at 50% 60%, rgba(100,160,220,0.06) 0%, transparent 70%);
 }
 .portal{
-  flex:1;min-width:200px;max-width:240px;
-  padding:40px 28px;border-radius:24px;
+  flex:1;min-width:170px;max-width:200px;
+  padding:36px 18px;border-radius:24px;
   /* Frosted glass core */
   background:rgba(18,22,40,0.28);
   backdrop-filter:blur(14px) saturate(150%) brightness(1.05);
@@ -183,70 +183,59 @@ html,body{
 .hero .logo,.hero .subtitle,.hero .portals{
   transition:opacity 0.8s ease; /* slow fade-out */
 }
-.hero.dimmed .logo{opacity:0.25}
-.hero.dimmed .subtitle{opacity:0.18}
+.hero.dimmed .logo{opacity:0.45}
+.hero.dimmed .subtitle{opacity:0.25}
 .hero.dimmed .portals{opacity:0.12;pointer-events:none}
 .hero.dimmed .portals:hover{opacity:0.12}
 
-/* ===== Guestbook ===== */
-.guestbook-bar{
-  position:fixed;bottom:0;left:0;right:0;z-index:10;
-  display:flex;flex-direction:column;align-items:center;
-  transition:transform 0.45s cubic-bezier(0.22,1,0.36,1);
-  transform:translateY(calc(100% - 44px));
+/* ===== Guestbook modal ===== */
+.guestbook-overlay{
+  position:fixed;inset:0;z-index:50;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.3s ease;
 }
-.guestbook-bar.open{transform:translateY(0)}
-
-.guestbook-toggle{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 24px;border-radius:14px 14px 0 0;
-  background:rgba(18,22,40,0.35);
-  backdrop-filter:blur(14px) saturate(150%) brightness(1.05);
-  -webkit-backdrop-filter:blur(14px) saturate(150%) brightness(1.05);
+.guestbook-overlay.open{opacity:1;pointer-events:auto}
+.guestbook-modal{
+  width:min(720px,90vw);max-height:70vh;
+  padding:28px 24px;border-radius:18px;
+  background:rgba(14,20,40,0.48);
+  backdrop-filter:blur(22px) saturate(150%) brightness(1.05);
+  -webkit-backdrop-filter:blur(22px) saturate(150%) brightness(1.05);
   border-top:1px solid rgba(255,255,255,0.14);
   border-left:1px solid rgba(255,255,255,0.10);
   border-right:1px solid rgba(255,255,255,0.05);
-  color:var(--g2);font-family:var(--ft);font-size:0.85rem;
-  letter-spacing:2px;cursor:pointer;user-select:none;
-  box-shadow:0 -4px 20px rgba(0,0,0,0.3);
-  transition:all 0.3s ease;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  overflow-y:auto;position:relative;
 }
-.guestbook-toggle:hover{
-  border-top-color:rgba(255,255,255,0.22);
-  background:rgba(18,22,40,0.45);
-  box-shadow:0 -6px 28px rgba(0,0,0,0.4),0 0 20px rgba(212,184,122,0.06);
-}
-.guestbook-arrow{
-  display:inline-block;transition:transform 0.35s ease;
-  font-size:0.7rem;
-}
-.guestbook-bar.open .guestbook-arrow{transform:rotate(180deg)}
-
-.guestbook-body{
-  width:100%;max-width:800px;max-height:55vh;overflow-y:auto;
-  padding:20px 24px;
-  background:rgba(12,18,38,0.42);
-  backdrop-filter:blur(18px) saturate(150%) brightness(1.05);
-  -webkit-backdrop-filter:blur(18px) saturate(150%) brightness(1.05);
-  border-top:1px solid rgba(255,255,255,0.08);
-  border-left:1px solid rgba(255,255,255,0.04);
-  border-right:1px solid rgba(255,255,255,0.02);
-  box-shadow:0 -8px 32px rgba(0,0,0,0.4);
-}
-.guestbook-body::-webkit-scrollbar{width:3px}
-.guestbook-body::-webkit-scrollbar-thumb{background:rgba(212,184,122,0.18);border-radius:2px}
-.guestbook-body h3{
+.guestbook-modal::-webkit-scrollbar{width:3px}
+.guestbook-modal::-webkit-scrollbar-thumb{background:rgba(212,184,122,0.18);border-radius:2px}
+.guestbook-modal h3{
   font-family:var(--ft);font-size:1.1rem;
   background:linear-gradient(180deg,var(--g3),var(--gold));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   margin-bottom:16px;text-align:center;letter-spacing:2px;
 }
+.guestbook-close{
+  position:absolute;top:12px;right:14px;
+  width:32px;height:32px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.04);
+  color:var(--t2);cursor:pointer;font-size:0.9rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+.guestbook-close:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
 
 @media(max-width:600px){
   .hero .logo{font-size:2.2rem}
   .portals{gap:20px}
   .portal{padding:30px 20px}
-  .guestbook-body{max-height:45vh;padding:16px}
+  .guestbook-modal{max-height:80vh;padding:20px 14px}
 }
 </style>
 </head>
@@ -284,7 +273,7 @@ html,body{
       <p>回顾祈愿历程，一览数据<br>收集进度与稀有度分布</p>
       <span class="portal-arrow">进入 →</span>
     </a>
-    <a class="portal guestbook" id="portal-guestbook" onclick="event.preventDefault();document.getElementById('guestbook-toggle').click()">
+    <a class="portal guestbook" id="portal-guestbook" onclick="event.preventDefault();openGuestbook()">
       <div class="portal-icon">💬</div>
       <h2>留言板</h2>
       <p>留下足迹，分享你的祈愿故事<br>与星穹旅人们一同交流</p>
@@ -298,12 +287,10 @@ html,body{
 <!-- Dimmed-state return button -->
 <button class="return-btn" id="return-btn" title="回到入口">✦</button>
 
-<!-- ===== Guestbook ===== -->
-<div class="guestbook-bar" id="guestbook-bar">
-  <button class="guestbook-toggle" id="guestbook-toggle">
-    💬 留言板 <span class="guestbook-arrow">▾</span>
-  </button>
-  <div class="guestbook-body" id="guestbook-body">
+<!-- ===== Guestbook modal ===== -->
+<div class="guestbook-overlay" id="guestbook-overlay">
+  <div class="guestbook-modal" id="guestbook-modal">
+    <button class="guestbook-close" id="guestbook-close">✕</button>
     <h3>— 星穹留言 —</h3>
     <div id="giscus-container"></div>
   </div>
@@ -720,8 +707,8 @@ frame();
 (function(){
   var hero = document.querySelector('.hero');
   var returnBtn = document.getElementById('return-btn');
-  var guestbookBar = document.getElementById('guestbook-bar');
-  var guestbookToggle = document.getElementById('guestbook-toggle');
+  var gbOverlay = document.getElementById('guestbook-overlay');
+  var gbClose = document.getElementById('guestbook-close');
   var giscusLoaded = false;
 
   // ---- Portal fade ----
@@ -766,15 +753,16 @@ frame();
   // Start the timer on page load
   resetTimer();
 
-  // ---- Guestbook toggle ----
-  guestbookToggle.addEventListener('click', function(){
-    var isOpen = guestbookBar.classList.contains('open');
-    if(isOpen){
-      guestbookBar.classList.remove('open');
-    }else{
-      guestbookBar.classList.add('open');
-      if(!giscusLoaded) loadGiscus();
-    }
+  // ---- Guestbook modal ----
+  window.openGuestbook = function(){
+    gbOverlay.classList.add('open');
+    if(!giscusLoaded) loadGiscus();
+  };
+  gbClose.addEventListener('click', function(){
+    gbOverlay.classList.remove('open');
+  });
+  gbOverlay.addEventListener('click', function(e){
+    if(e.target === gbOverlay) gbOverlay.classList.remove('open');
   });
 
   function loadGiscus(){
