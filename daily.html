@@ -209,7 +209,7 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 
   <div class="days-ring" id="days-ring"></div>
 
-  <button class="sign-btn" id="sign-btn" onclick="doSign()">签 到</button>
+  <button class="sign-btn" id="sign-btn">签 到</button>
 
   <div class="total-signs">
     累计签到 <span id="total-signs">0</span> 次
@@ -398,15 +398,18 @@ function renderDays(){
     node.style.top=y+'px';
 
     // Determine state
-    if(signed && i<streak+1){
-      // Already signed this day (in current streak)
+    const hasHistory = state.lastDate !== '';
+    if(hasHistory && i <= state.streak){
       node.classList.add('checked');
-    }else if(!signed && i<streak){
-      // Previously signed days
-      node.classList.add('checked');
-    }else if((!signed && i===streak) || (signed && i===streak+1 && i<7)){
-      // Today's available day
-      node.classList.add('today');
+    }
+    if(hasHistory){
+      if(i === state.streak + 1 && i < 7){
+        node.classList.add('today');
+      }
+    }else{
+      if(i === 0){
+        node.classList.add('today');
+      }
     }
 
     node.innerHTML=`
@@ -481,6 +484,7 @@ function showRewardToast(reward){
 // Init
 loadState();
 renderDays();
+document.getElementById('sign-btn').addEventListener('click', doSign);
 })();
 </script>
 
