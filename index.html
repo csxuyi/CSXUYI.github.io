@@ -153,9 +153,6 @@ html,body{
 .hero .logo,.hero .subtitle,.hero .portals{
   transition:opacity 0.8s ease; /* slow fade-out */
 }
-.hero:not(.dimmed) .logo,.hero:not(.dimmed) .subtitle,.hero:not(.dimmed) .portals{
-  transition:none; /* instant reappear */
-}
 .hero.dimmed .logo{opacity:0.25}
 .hero.dimmed .subtitle{opacity:0.18}
 .hero.dimmed .portals{opacity:0.12;pointer-events:none}
@@ -692,7 +689,14 @@ frame();
   var DIM_DELAY = 1800;
 
   function undim(){
+    // Force instant reappear via inline style, then clear for next fade-out
+    var els = hero.querySelectorAll('.logo,.subtitle,.portals');
+    els.forEach(function(el){ el.style.transition = 'none'; });
     hero.classList.remove('dimmed');
+    // Trigger reflow so the 'none' transition takes effect immediately
+    hero.offsetHeight;
+    // Restore CSS transition for next fade-out
+    els.forEach(function(el){ el.style.transition = ''; });
     resetTimer();
   }
 
