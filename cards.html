@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>Maison de Cartes — 牌之殿堂</title>
+<title>X[CARDS] · xLab</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -310,6 +310,187 @@
   }
   .legend span { color: var(--gold); }
 
+  /* ===== [MYSTERY] locked 6★ card (创世神未抽到) ===== */
+  .front-locked{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 40%,#1a0e18 0%,#0a040f 60%,#000 100%);
+    border-radius:18px;overflow:hidden;
+  }
+  .front-locked::before{
+    content:'';position:absolute;inset:0;
+    background:repeating-conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(255,184,198,.04) 3deg,
+      transparent 6deg,
+      rgba(255,184,198,.04) 9deg);
+    animation:lk-spin 12s linear infinite;
+  }
+  @keyframes lk-spin{to{transform:rotate(360deg)}}
+  .locked-glyph{
+    position:relative;z-index:1;
+    font-family:"Cinzel","Noto Serif SC",serif;
+    font-size:4.5rem;line-height:1;
+    background:linear-gradient(180deg,rgba(255,200,220,.45),rgba(255,160,190,.18));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    filter:drop-shadow(0 0 20px rgba(255,184,198,.4));
+    animation:lk-pulse 3s ease-in-out infinite;
+  }
+  @keyframes lk-pulse{0%,100%{opacity:.7}50%{opacity:1}}
+  .locked-label{
+    position:relative;z-index:1;
+    font-family:"JetBrains Mono",ui-monospace,monospace;
+    font-size:.6rem;letter-spacing:.32em;color:rgba(255,184,198,.5);
+    margin-top:12px;
+  }
+
+  /* ===== [GEEK] Hex radar floating panel ===== */
+  .radar-panel{
+    position:fixed;right:18px;top:18px;z-index:60;
+    width:230px;padding:14px 14px 10px;
+    background:rgba(14,18,32,.55);
+    backdrop-filter:blur(18px) saturate(140%);
+    -webkit-backdrop-filter:blur(18px) saturate(140%);
+    border:1px solid rgba(212,184,122,.22);border-radius:14px;
+    box-shadow:0 18px 50px rgba(0,0,0,.5);
+    color:#E8E0D0;font-family:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+    transform:translateX(110%);opacity:0;
+    transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .35s ease;
+    pointer-events:none;
+  }
+  .radar-panel.show{transform:translateX(0);opacity:1}
+  .radar-panel .rp-name{
+    font-family:"Cinzel","Noto Serif SC",serif;font-size:.95rem;font-weight:600;
+    color:var(--gold-bright,#F5E6CC);letter-spacing:.06em;margin-bottom:2px;
+  }
+  .radar-panel .rp-rarity{font-size:.7rem;color:#9999AA;margin-bottom:8px;letter-spacing:.18em}
+  .radar-panel svg{display:block;width:100%;height:auto}
+  .radar-panel .rp-stats{
+    display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;
+    font-size:.62rem;margin-top:6px;color:#c8c4b0;letter-spacing:.08em;
+  }
+  .radar-panel .rp-stats b{color:var(--gold,#D4B87A);font-weight:600}
+
+  /* ============================================================
+     ▼ XLAB · CARDS LAYOUT REWORK ▼
+     - 卡牌放大 (220→280)
+     - 扇形距离同比放大，整体下移
+     - 卡面玻璃化 + 金色细描边 + 仪式化光晕
+     - Masthead 切换为 X[CARDS] 终端风
+     - Caption / nav 微调，去掉俗套的"hover 揭示"
+  ============================================================ */
+  :root{
+    --card-w:280px;
+    --card-h:408px;
+    --card-t:7px;
+  }
+  /* fan 整体上移让 info 浮窗有空间 */
+  .scene{align-items:center !important;padding-bottom:60px}
+  /* face 加更深的双层阴影 + 内金边 */
+  .face{
+    box-shadow:
+      0 50px 80px -25px rgba(0,0,0,0.85),
+      0 30px 50px -20px rgba(0,0,0,0.55),
+      0 0 0 1px rgba(212,175,110,0.22),
+      0 0 0 2px rgba(0,0,0,0.4) inset !important;
+    border-radius:18px !important;
+  }
+  /* front 加内金细线 + 顶部亮光带 */
+  .front::before{
+    content:'';position:absolute;inset:0;border-radius:18px;pointer-events:none;z-index:3;
+    border:1px solid rgba(245,230,204,0.18);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.10) inset,
+      0 0 60px -10px rgba(212,175,110,0.18) inset;
+  }
+  .front::after{
+    content:'';position:absolute;left:8%;right:8%;top:6%;height:38%;
+    background:linear-gradient(180deg,rgba(255,255,255,0.18),transparent);
+    border-radius:14px 14px 50% 50%/14px 14px 100% 100%;
+    pointer-events:none;mix-blend-mode:overlay;z-index:3;
+    opacity:.4;
+  }
+  /* overlay 加大留更多角色 */
+  .front-overlay{padding:22px 18px 16px !important}
+  .front-name{font-size:1.18rem !important;letter-spacing:.08em !important}
+  .front-stars{font-size:.78rem !important;letter-spacing:.22em !important;margin-bottom:6px !important}
+  .front-desc{font-size:.78rem !important;line-height:1.55 !important}
+
+  /* back medallion 比例放大 */
+  .back-medallion{width:130px !important;height:188px !important}
+  .back-medallion .monogram{font-size:68px !important}
+
+  /* 5★/6★ flipped 时光晕加强 */
+  .card.s6.flipped .face{
+    box-shadow:
+      0 70px 120px -25px rgba(0,0,0,0.9),
+      0 40px 60px -18px rgba(255,184,198,0.4),
+      0 0 0 1.5px rgba(255,184,198,0.55),
+      0 0 100px -8px rgba(255,184,198,0.45) !important;
+  }
+  .card.s5.flipped .face{
+    box-shadow:
+      0 70px 120px -25px rgba(0,0,0,0.9),
+      0 40px 60px -18px rgba(212,175,110,0.42),
+      0 0 0 1.5px rgba(240,210,138,0.55),
+      0 0 100px -8px rgba(240,210,138,0.45) !important;
+  }
+  .card.s4.flipped .face{
+    box-shadow:
+      0 65px 110px -22px rgba(0,0,0,0.85),
+      0 36px 56px -18px rgba(176,143,255,0.32),
+      0 0 0 1.5px rgba(176,143,255,0.45),
+      0 0 90px -8px rgba(176,143,255,0.28) !important;
+  }
+
+  /* Masthead → X[CARDS] 终端风 */
+  .masthead{top:22px !important}
+  .masthead .eyebrow{
+    font-family:"JetBrains Mono","SF Mono",ui-monospace,monospace !important;
+    font-size:9px !important;letter-spacing:.5em !important;color:#7aa9ff !important;
+  }
+  .masthead .title{
+    font-family:"JetBrains Mono","SF Mono",ui-monospace,monospace !important;
+    font-size:26px !important;letter-spacing:.08em !important;font-weight:600 !important;
+  }
+  .masthead .title::before{content:'X[';color:#7aa9ff;letter-spacing:0;margin-right:4px}
+  .masthead .title::after{content:']';color:#7aa9ff;letter-spacing:0;margin-left:4px}
+  .masthead .rule{margin:8px auto !important;width:60px !important}
+  .masthead .sub{
+    font-family:"JetBrains Mono",ui-monospace,monospace !important;
+    font-size:11px !important;font-style:normal !important;
+    letter-spacing:.18em !important;color:var(--gold) !important;
+  }
+  .masthead .sub::before{content:'▸ ';opacity:.7}
+
+  /* Info 浮窗向上、放大字号 */
+  .info{bottom:96px !important}
+  .info .rank{font-size:24px !important;letter-spacing:.18em !important}
+  .info .suit{font-size:10px !important;letter-spacing:.45em !important}
+
+  /* Caption 改极简提示 */
+  .caption{
+    font-family:"JetBrains Mono",ui-monospace,monospace !important;
+    font-size:9px !important;letter-spacing:.45em !important;
+  }
+
+  /* Legend / radar 字体小调 */
+  .legend{
+    font-family:"JetBrains Mono",ui-monospace,monospace !important;
+    font-size:9px !important;letter-spacing:.4em !important;
+  }
+
+  /* 视口太窄时缩小，避免溢出 */
+  @media(max-height:780px){
+    :root{--card-w:240px;--card-h:348px}
+  }
+  @media(max-width:760px){
+    :root{--card-w:200px;--card-h:288px;--card-t:5px}
+    .masthead .title{font-size:20px !important}
+    .info{bottom:78px !important}
+    .info .rank{font-size:18px !important}
+  }
+
   @keyframes cardEnter { from{opacity:0}to{opacity:1} }
   @keyframes fadeIn { from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)} }
   .masthead { animation: fadeIn 1.5s ease 0.8s backwards; }
@@ -355,6 +536,12 @@
   <div class="suit" id="info-suit">SELECT A CARD</div>
 </div>
 <div class="legend"><span id="legend-rarity">—</span><br/><span>6★ 5★ 4★ 3★</span></div>
+<div class="radar-panel" id="radar-panel">
+  <div class="rp-name" id="rp-name">—</div>
+  <div class="rp-rarity" id="rp-rarity">—</div>
+  <svg viewBox="0 0 200 200" id="rp-svg"></svg>
+  <div class="rp-stats" id="rp-stats"></div>
+</div>
 
 <div class="cursor" id="cursor"></div>
 
@@ -383,6 +570,28 @@ const ALL=[
   {name:"SHIT",img:"image/SHIT.jpg",rarity:3,desc:"没什么意义，降低你的抽卡概率"},
   {name:"zonk",img:"image/zzh4.jpg",rarity:3,desc:"低客的黑调"},
 ];
+
+// [MYSTERY] 创世神隐藏：只有真正抽出 6★ 后才在图鉴中揭示
+(function(){
+  const gIdx=ALL.findIndex(c=>c.rarity===6);
+  if(gIdx<0) return;
+  let unlocked=false;
+  try{
+    const d=JSON.parse(localStorage.getItem('wish_genshin_v5'));
+    if(d && d.hi){
+      unlocked=d.hi.some(h=>h.rarity===6);
+    }
+  }catch(e){}
+  if(!unlocked){
+    ALL[gIdx]={
+      name:'???',
+      img:'',
+      rarity:6,
+      desc:'条件未知 · 尚未揭示',
+      locked:true
+    };
+  }
+})();
 
 const PER_PAGE=5;
 const TOTAL_PAGES=Math.ceil(ALL.length/PER_PAGE);
@@ -465,15 +674,18 @@ function renderPage(page){
     el.dataset.desc=c.desc;
     el.dataset.rarity=c.rarity;
     el.style.animation=`cardEnter 0.5s ease ${i*0.08}s backwards`;
+    const locked=c.locked;
     el.innerHTML=`<div class="card-flip">
       <div class="edge left"></div><div class="edge right"></div>
-      ${backFaceHTML(c.rarity)}
-      <div class="face front ${rClass}">
-        <img class="front-img" src="${c.img}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-        <span class="front-fallback" style="display:none">${'★'.repeat(c.rarity)}</span>
+      ${locked ? backFaceHTML(6).replace(/VI/g,'?').replace(/6★/g,'???') : backFaceHTML(c.rarity)}
+      <div class="face front ${rClass} ${locked?'locked-card':''}">
+        ${locked
+          ? `<div class="front-locked"><div class="locked-glyph">✦</div><div class="locked-label">抽 取 后 揭 示</div></div>`
+          : `<img class="front-img" src="${c.img}" alt="${c.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+             <span class="front-fallback" style="display:none">${'★'.repeat(c.rarity)}</span>`}
         <div class="front-overlay">
           <div class="front-name">${c.name}</div>
-          <div class="front-stars">${stars}</div>
+          <div class="front-stars">${locked?'??????':stars}</div>
           <div class="front-desc">${c.desc}</div>
         </div>
       </div>
@@ -481,6 +693,14 @@ function renderPage(page){
     </div>`;
     fan.appendChild(el);
     cards.push(el);
+    // [GEEK] holographic foil for 5★/6★ front face (skip locked)
+    if(c.rarity>=5 && !c.locked){
+      el.querySelectorAll('.face.front').forEach(f=>{
+        // attachHolo runs once geek.js is loaded
+        const apply=()=>window.GeekLayer && window.GeekLayer.attachHolo(f);
+        if(window.GeekLayer) apply(); else setTimeout(apply,300);
+      });
+    }
   });
 
   // Fill remaining slots with ghosts
@@ -510,22 +730,22 @@ function defaultFanTransform(i,total){
     'translate3d(120px,0,-10px) rotateY(-6deg) rotateZ(6deg)'
   ][i];
   if(total===3)return [
-    'translate3d(-240px,0,-60px) rotateY(10deg) rotateZ(-14deg)',
-    'translate3d(0,0,40px) rotateY(0) rotateZ(0)',
-    'translate3d(240px,0,-60px) rotateY(-10deg) rotateZ(14deg)'
+    'translate3d(-300px,0,-60px) rotateY(10deg) rotateZ(-14deg)',
+    'translate3d(0,0,50px) rotateY(0) rotateZ(0)',
+    'translate3d(300px,0,-60px) rotateY(-10deg) rotateZ(14deg)'
   ][i];
   if(total===4)return [
-    'translate3d(-300px,0,-90px) rotateY(13deg) rotateZ(-18deg)',
-    'translate3d(-100px,0,-10px) rotateY(5deg) rotateZ(-6deg)',
-    'translate3d(100px,0,-10px) rotateY(-5deg) rotateZ(6deg)',
-    'translate3d(300px,0,-90px) rotateY(-13deg) rotateZ(18deg)'
+    'translate3d(-380px,0,-90px) rotateY(13deg) rotateZ(-18deg)',
+    'translate3d(-130px,0,-10px) rotateY(5deg) rotateZ(-6deg)',
+    'translate3d(130px,0,-10px) rotateY(-5deg) rotateZ(6deg)',
+    'translate3d(380px,0,-90px) rotateY(-13deg) rotateZ(18deg)'
   ][i];
   return [
-    'translate3d(-360px,0,-100px) rotateY(15deg) rotateZ(-22deg)',
-    'translate3d(-180px,0,-30px) rotateY(8deg) rotateZ(-11deg)',
-    'translate3d(0,0,40px) rotateY(0) rotateZ(0)',
-    'translate3d(180px,0,-30px) rotateY(-8deg) rotateZ(11deg)',
-    'translate3d(360px,0,-100px) rotateY(-15deg) rotateZ(22deg)'
+    'translate3d(-460px,0,-110px) rotateY(15deg) rotateZ(-22deg)',
+    'translate3d(-230px,0,-30px) rotateY(8deg) rotateZ(-11deg)',
+    'translate3d(0,0,50px) rotateY(0) rotateZ(0)',
+    'translate3d(230px,0,-30px) rotateY(-8deg) rotateZ(11deg)',
+    'translate3d(460px,0,-110px) rotateY(-15deg) rotateZ(22deg)'
   ][i];
 }
 
@@ -565,13 +785,68 @@ function activate(idx){
   infoRank.textContent=c.dataset.name;
   infoSuit.textContent=c.dataset.stars+' · '+c.dataset.desc;
   document.getElementById('legend-rarity').textContent=c.dataset.rarity+'★';
+  showRadar(c.dataset.name,+c.dataset.rarity);
 }
+
+/* ===== [GEEK] Hex radar — deterministic per-name "stats" ===== */
+function hashSeed(s){let h=2166136261>>>0;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function rng(seed){let x=seed||1;return ()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return ((x>>>0)%10000)/10000;};}
+const RADAR_AXES=['颜值','战力','抽象','沙比','欧气','整活'];
+function computeStats(name,rarity){
+  const r=rng(hashSeed(name)+rarity*131);
+  const base=rarity===6?88:rarity===5?78:rarity===4?66:50;
+  return RADAR_AXES.map(()=>Math.min(100,Math.max(20,Math.round(base+(r()-0.4)*40))));
+}
+function showRadar(name,rarity){
+  const panel=document.getElementById('radar-panel');
+  document.getElementById('rp-name').textContent=name;
+  document.getElementById('rp-rarity').textContent=rarity+'★ ATTRIBUTES';
+  const vals=computeStats(name,rarity);
+  const cx=100,cy=100,R=72;
+  const N=RADAR_AXES.length;
+  const ang=i=>-Math.PI/2+i*Math.PI*2/N;
+  // build grid
+  let svg='';
+  for(let g=1;g<=4;g++){
+    const r=R*g/4;
+    const pts=[];
+    for(let i=0;i<N;i++) pts.push((cx+Math.cos(ang(i))*r).toFixed(1)+','+(cy+Math.sin(ang(i))*r).toFixed(1));
+    svg+=`<polygon points="${pts.join(' ')}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+  }
+  for(let i=0;i<N;i++){
+    svg+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.cos(ang(i))*R).toFixed(1)}" y2="${(cy+Math.sin(ang(i))*R).toFixed(1)}" stroke="rgba(255,255,255,0.06)"/>`;
+  }
+  // data polygon
+  const dpts=vals.map((v,i)=>{
+    const r=R*v/100;
+    return (cx+Math.cos(ang(i))*r).toFixed(1)+','+(cy+Math.sin(ang(i))*r).toFixed(1);
+  });
+  const fill=rarity===6?'rgba(255,184,198,0.32)':rarity===5?'rgba(212,184,122,0.32)':rarity===4?'rgba(176,143,255,0.28)':'rgba(140,170,210,0.25)';
+  const stroke=rarity===6?'#FFB8C6':rarity===5?'#D4B87A':rarity===4?'#B08FFF':'#8CA9CB';
+  svg+=`<polygon points="${dpts.join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" />`;
+  vals.forEach((v,i)=>{
+    const r=R*v/100;
+    const x=(cx+Math.cos(ang(i))*r).toFixed(1);
+    const y=(cy+Math.sin(ang(i))*r).toFixed(1);
+    svg+=`<circle cx="${x}" cy="${y}" r="2.5" fill="${stroke}"/>`;
+    // labels
+    const lr=R+14;
+    const lx=(cx+Math.cos(ang(i))*lr).toFixed(1);
+    const ly=(cy+Math.sin(ang(i))*lr+3).toFixed(1);
+    svg+=`<text x="${lx}" y="${ly}" font-family="JetBrains Mono,monospace" font-size="9" fill="#9999AA" text-anchor="middle">${RADAR_AXES[i]}</text>`;
+  });
+  document.getElementById('rp-svg').innerHTML=svg;
+  document.getElementById('rp-stats').innerHTML=RADAR_AXES.map((a,i)=>`<span>${a} <b>${vals[i]}</b></span>`).join('');
+  panel.classList.add('show');
+}
+function hideRadar(){document.getElementById('radar-panel').classList.remove('show');}
 
 function resetAll(){
   activeIdx=null;
   body.classList.remove('has-active');
   cards.forEach(c=>{c.classList.remove('flipped')});
   applyDefaultPositions();
+  hideRadar();
 }
 
 function bindCardEvents(){
@@ -582,9 +857,18 @@ function bindCardEvents(){
     const fresh=card.cloneNode(true);
     card.parentNode.replaceChild(fresh,card);
     cards[idx]=fresh;
-    fresh.addEventListener('mouseenter',()=>{activate(idx);cursor.classList.add('over-card')});
-    fresh.addEventListener('mouseleave',()=>{cursor.classList.remove('over-card')});
+    fresh.addEventListener('mouseenter',()=>{
+      cursor.classList.add('over-card');
+      // [GEEK] 防误触：hover 220ms 后才激活，期间离开则取消
+      clearTimeout(fresh._hoverT);
+      fresh._hoverT=setTimeout(()=>{ if(activeIdx!==idx) activate(idx); },220);
+    });
+    fresh.addEventListener('mouseleave',()=>{
+      cursor.classList.remove('over-card');
+      clearTimeout(fresh._hoverT);
+    });
     fresh.addEventListener('click',()=>{
+      clearTimeout(fresh._hoverT);
       if(activeIdx===idx)resetAll();
       else{activate(idx);cursor.classList.add('over-card')}
     });
@@ -616,19 +900,19 @@ window.addEventListener('mousemove',e=>{
 });
 
 function tick(){
-  currentX+=(targetX-currentX)*0.04;
-  currentY+=(targetY-currentY)*0.04;
+  currentX+=(targetX-currentX)*0.025;
+  currentY+=(targetY-currentY)*0.025;
   cursorVX+=(cursorX-cursorVX)*0.12;
   cursorVY+=(cursorY-cursorVY)*0.12;
-  const damp=activeIdx===null?1:0.35;
-  fan.style.transform=`translate3d(${currentX*6*damp}px,${currentY*3*damp}px,0) rotateY(${currentX*8*damp}deg) rotateX(${-currentY*5*damp}deg)`;
+  const damp=activeIdx===null?0.55:0.18;
+  fan.style.transform=`translate3d(${currentX*4*damp}px,${currentY*2*damp}px,0) rotateY(${currentX*4.5*damp}deg) rotateX(${-currentY*2.8*damp}deg)`;
   cursor.style.transform=`translate(${cursorVX}px,${cursorVY}px) translate(-50%,-50%)`;
   requestAnimationFrame(tick);
 }
 tick();
 
 let leaveTimer=null;
-fan.addEventListener('mouseleave',()=>{leaveTimer=setTimeout(resetAll,300)});
+fan.addEventListener('mouseleave',()=>{leaveTimer=setTimeout(resetAll,500)});
 fan.addEventListener('mouseenter',()=>{if(leaveTimer){clearTimeout(leaveTimer);leaveTimer=null}});
 document.addEventListener('mouseleave',()=>cursor.style.opacity='0');
 document.addEventListener('mouseenter',()=>cursor.style.opacity='1');
@@ -637,5 +921,6 @@ document.addEventListener('mouseenter',()=>cursor.style.opacity='1');
 renderPage(0);
 </script>
 
+<script src="assets/geek.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>祈愿</title>
+<title>X[WISH] · xLab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -1488,7 +1488,7 @@ body{
 .mg-gameover{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%) scale(0);
-  text-align:center;z-index:20;
+  text-align:center;z-index:20;cursor:default;
   transition:transform 0.4s cubic-bezier(0.34,1.5,0.64,1);
   background:rgba(8,14,32,0.9);padding:32px 40px;border-radius:20px;
   border:1px solid rgba(212,184,122,0.3);
@@ -1522,6 +1522,830 @@ body{
   .mg-gameover h2{font-size:1.4rem}
 }
 </style>
+<style>
+/* ============ wish.html · GEEK ENHANCEMENT LAYER ============ */
+
+/* — 保底进度环 (mini ring above pity pill) — */
+.pity-ring{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-right:8px;vertical-align:middle;
+}
+.pity-ring svg{width:28px;height:28px;display:block;transform:rotate(-90deg)}
+.pity-ring circle{fill:none;stroke-width:3}
+.pity-ring .pr-bg{stroke:rgba(255,255,255,0.08)}
+.pity-ring .pr-fg{stroke:var(--gold);transition:stroke-dashoffset .4s ease,stroke .3s ease}
+.pity-ring.danger .pr-fg{stroke:#FF6E78;animation:pr-pulse 0.7s ease-in-out infinite}
+@keyframes pr-pulse{0%,100%{filter:drop-shadow(0 0 2px #FF6E78)}50%{filter:drop-shadow(0 0 10px #FF6E78)}}
+
+/* — 屏幕边缘红色脉冲 (near hard pity) — */
+.pity-edge-pulse{
+  position:fixed;inset:0;z-index:9000;pointer-events:none;
+  box-shadow:inset 0 0 120px 20px rgba(255,80,90,0);
+  transition:box-shadow 0.6s ease;
+}
+.pity-edge-pulse.on{
+  box-shadow:inset 0 0 180px 40px rgba(255,80,90,0.45);
+  animation:edge-breathe 1.6s ease-in-out infinite;
+}
+@keyframes edge-breathe{
+  0%,100%{box-shadow:inset 0 0 160px 30px rgba(255,80,90,0.32)}
+  50%    {box-shadow:inset 0 0 220px 60px rgba(255,80,90,0.58)}
+}
+
+/* — 抽卡 · 虫洞光锥 (wormhole cone) — */
+.wormhole{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:120vmax;height:120vmax;border-radius:50%;
+  pointer-events:none;z-index:7000;opacity:0;
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,0.0) 0%,
+      rgba(255,220,140,0.22) 18%,
+      rgba(180,140,255,0.18) 30%,
+      rgba(80,40,180,0.10) 45%,
+      transparent 65%);
+  mix-blend-mode:screen;filter:blur(2px);
+  transition:opacity .35s ease;
+}
+.wormhole.on{opacity:1;animation:wormhole-spin 1.8s linear infinite}
+@keyframes wormhole-spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* — 色散环 (chromatic aberration on burst) — */
+.chroma{
+  position:fixed;inset:-10px;z-index:7100;pointer-events:none;
+  opacity:0;mix-blend-mode:screen;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 38%, rgba(255,40,40,0.0) 40%, transparent 42%);
+  filter:blur(0px);
+}
+.chroma.on{
+  animation:chroma-burst .7s ease-out;
+}
+@keyframes chroma-burst{
+  0%   {opacity:0;backdrop-filter:hue-rotate(0deg)}
+  20%  {opacity:1;backdrop-filter:hue-rotate(20deg) saturate(2)}
+  60%  {opacity:0.8;backdrop-filter:hue-rotate(-20deg) saturate(2)}
+  100% {opacity:0;backdrop-filter:hue-rotate(0deg)}
+}
+
+/* — 6★ 创世神演出: 屏幕裂痕 + glitch + slow-mo — */
+.god-mode{
+  position:fixed;inset:0;z-index:8500;pointer-events:none;opacity:0;
+}
+.god-mode.on{opacity:1}
+.god-crack{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0);
+  width:140vmax;height:140vmax;
+  background:
+    conic-gradient(from 0deg,
+      transparent 0deg, rgba(255,220,140,0.0) 5deg,
+      rgba(255,240,200,0.95) 6deg, rgba(255,220,140,0.0) 7deg,
+      transparent 60deg,
+      rgba(255,240,200,0.85) 61deg, rgba(255,220,140,0.0) 62deg,
+      transparent 130deg,
+      rgba(255,240,200,0.9) 131deg, rgba(255,220,140,0.0) 132deg,
+      transparent 210deg,
+      rgba(255,240,200,0.8) 211deg, rgba(255,220,140,0.0) 212deg,
+      transparent 290deg,
+      rgba(255,240,200,0.9) 291deg, rgba(255,220,140,0.0) 292deg,
+      transparent 360deg);
+  filter:drop-shadow(0 0 40px #ffd07a) drop-shadow(0 0 100px #ffaa44);
+  transform-origin:50% 50%;
+}
+.god-mode.on .god-crack{animation:god-crack-expand 2.4s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes god-crack-expand{
+  0%   {transform:translate(-50%,-50%) scale(0) rotate(0deg);opacity:0}
+  10%  {opacity:1}
+  100% {transform:translate(-50%,-50%) scale(1) rotate(35deg);opacity:0.7}
+}
+
+/* 6★ glitch overlay (slices) */
+.god-glitch{
+  position:absolute;inset:0;overflow:hidden;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,220,140,0.0) 0px,
+      rgba(255,220,140,0.0) 6px,
+      rgba(255,80,80,0.04)  6px,
+      rgba(255,80,80,0.04)  7px,
+      rgba(60,180,255,0.04) 7px,
+      rgba(60,180,255,0.04) 8px);
+  mix-blend-mode:screen;opacity:0;
+}
+.god-mode.on .god-glitch{animation:god-glitch 1.6s steps(20) 0.3s}
+@keyframes god-glitch{0%,100%{opacity:0;transform:translate(0,0)}10%{opacity:.7;transform:translate(-6px,2px)}20%{opacity:.4;transform:translate(8px,-3px)}40%{opacity:.8;transform:translate(-12px,4px)}60%{opacity:.5;transform:translate(6px,-6px)}80%{opacity:.7;transform:translate(-4px,3px)}}
+
+/* 6★ giant text */
+.god-text{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0.6);
+  font-family:"Cinzel","Noto Serif SC",serif;font-weight:900;
+  font-size:clamp(3rem,10vw,9rem);letter-spacing:.4em;
+  background:linear-gradient(180deg,#fff6dc 0%,#ffd07a 45%,#a87622 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-shadow:0 0 60px rgba(255,200,80,0.6);
+  opacity:0;white-space:nowrap;
+}
+.god-mode.on .god-text{animation:god-text-in 2.4s cubic-bezier(.22,1,.36,1) 0.5s forwards}
+@keyframes god-text-in{
+  0%   {opacity:0;transform:translate(-50%,-50%) scale(0.4);filter:blur(20px)}
+  25%  {opacity:1;transform:translate(-50%,-50%) scale(1.05);filter:blur(0)}
+  85%  {opacity:1;transform:translate(-50%,-50%) scale(1.05)}
+  100% {opacity:0;transform:translate(-50%,-50%) scale(1.2);filter:blur(8px)}
+}
+
+/* slow-mo: applied to #app while 6★ burst */
+#app.slow-mo{
+  animation:slow-mo-tint 2.4s ease;
+}
+@keyframes slow-mo-tint{
+  0%   {filter:none}
+  10%  {filter:saturate(1.6) brightness(1.1) contrast(1.05)}
+  50%  {filter:saturate(2.2) brightness(1.2) contrast(1.1) hue-rotate(8deg)}
+  100% {filter:none}
+}
+#app.slow-mo .card-3d-inner{animation-duration:1.6s !important}
+
+/* — 5★/6★ 卡牌全息箔片 — */
+.card-3d .holo-foil,.card-3d .holo-glare{
+  border-radius:14px;z-index:5;
+}
+
+/* ============================================================
+   ▼ XLAB · INDEX-STYLE OVERRIDE LAYER ▼
+   保留磨砂玻璃 / 整体布局；向 index 终端风对齐：
+   - 等宽字体作为 UI/标签字
+   - 标题统一 X[...] 命令行风
+   - 配色保持金/紫/蓝，去除花哨装饰
+   - 按钮、标签、概率表、详情面板全部重设
+============================================================ */
+:root{
+  --xfont-mono:"JetBrains Mono","SF Mono","Menlo","Cascadia Code",ui-monospace,monospace;
+  --xfont-disp:"Cinzel","Noto Serif SC",serif;
+  --xline:rgba(212,184,122,0.22);
+  --xline2:rgba(255,255,255,0.10);
+  --xpanel:rgba(14,18,32,0.55);
+}
+
+/* — App backdrop 简化：去掉漂浮 blob 动画的过度感觉，统一冷调 — */
+#app{font-family:var(--xfont-mono)}
+
+/* — Top bar 重设 — */
+.top-bar{
+  padding:12px 20px !important;
+  border-bottom:1px solid var(--xline2) !important;
+  background:rgba(8,12,22,0.42) !important;
+  backdrop-filter:blur(14px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(14px) saturate(140%) !important;
+}
+.top-bar .back-arrow{
+  font-family:var(--xfont-mono);font-size:1rem !important;color:var(--gold) !important;
+  background:rgba(212,184,122,0.06) !important;
+  border:1px solid var(--xline) !important;border-radius:6px !important;
+  width:34px;height:34px;
+}
+.top-bar .brand-icon{
+  width:auto !important;height:auto !important;background:none !important;
+  font-family:var(--xfont-mono);font-size:.7rem;
+  color:var(--gold);letter-spacing:.32em;
+  border:1px solid var(--xline);padding:3px 8px;border-radius:4px;
+  background:rgba(212,184,122,0.06) !important;
+}
+.top-bar .brand-icon::before{content:'/// xLab'}
+.top-bar .banner-name{
+  font-family:var(--xfont-mono) !important;font-size:.86rem !important;
+  letter-spacing:.06em !important;color:var(--text) !important;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.top-bar .banner-name::before{content:'X[ ';color:#7aa9ff;-webkit-text-fill-color:#7aa9ff}
+.top-bar .banner-name::after{content:' ]';color:#7aa9ff;-webkit-text-fill-color:#7aa9ff}
+
+/* Resource card */
+.top-bar .res-card{
+  background:rgba(14,18,32,0.6) !important;
+  border:1px solid var(--xline) !important;border-radius:8px !important;
+  padding:6px 12px !important;font-family:var(--xfont-mono) !important;
+}
+.top-bar .res-num{font-family:var(--xfont-mono) !important;font-weight:700 !important;color:var(--g3) !important;font-size:.95rem !important}
+.top-bar .res-label{font-family:var(--xfont-mono) !important;font-size:.66rem !important;letter-spacing:.18em !important;color:var(--t2) !important}
+.top-bar .res-icon{display:none !important}
+.top-bar .btn-exchange{
+  font-family:var(--xfont-mono) !important;font-size:.72rem !important;
+  letter-spacing:.18em !important;color:var(--gold) !important;
+  background:rgba(212,184,122,0.06) !important;
+  border:1px solid var(--xline) !important;border-radius:6px !important;
+  padding:7px 14px !important;text-transform:uppercase;
+}
+.top-bar .btn-exchange:hover{background:rgba(212,184,122,0.14) !important;border-color:var(--gold) !important}
+.top-bar .btn-exchange::before{content:'▸ ';opacity:.7}
+.top-bar .icon-minigame,.top-bar .icon-mute{
+  background:rgba(14,18,32,0.6) !important;
+  border:1px solid var(--xline2) !important;border-radius:6px !important;
+  width:34px !important;height:34px !important;
+}
+
+/* — Sidebar tabs — */
+.sidebar{
+  background:rgba(8,12,22,0.42) !important;
+  border-right:1px solid var(--xline2) !important;
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+}
+.sidebar-tab{
+  font-family:var(--xfont-mono) !important;
+  border:1px solid transparent !important;
+  border-radius:8px !important;
+  background:transparent !important;
+  margin:4px 8px !important;padding:10px 12px !important;
+  position:relative;letter-spacing:.04em;
+  color:var(--t2) !important;
+  transition:all .25s ease !important;
+}
+.sidebar-tab .tab-label{
+  font-family:var(--xfont-mono) !important;font-size:.78rem !important;letter-spacing:.06em !important;
+}
+.sidebar-tab::before{
+  content:'▸';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  color:var(--gold);opacity:0;transition:opacity .25s ease,left .25s ease;
+  font-family:var(--xfont-mono);font-size:.7rem;
+}
+.sidebar-tab:hover{background:rgba(212,184,122,0.05) !important;color:var(--text) !important}
+.sidebar-tab.active{
+  background:rgba(212,184,122,0.10) !important;
+  border-color:var(--xline) !important;
+  color:var(--g3) !important;
+}
+.sidebar-tab.active::before{opacity:1;left:-2px}
+.sidebar-tab .tab-thumb{border-radius:4px !important}
+
+/* mobile-tabs same look */
+.mobile-tabs button,.mobile-tabs .mobile-tab{
+  font-family:var(--xfont-mono) !important;
+  letter-spacing:.06em !important;
+}
+
+/* — Center stage: 简化 sacred-ring，与 index 着色器风一致 — */
+.sacred-ring{
+  border-color:rgba(212,184,122,0.18) !important;
+  box-shadow:0 0 60px rgba(212,184,122,0.06) inset !important;
+}
+
+/* — UP char info 改终端 — */
+.up-char-info{
+  font-family:var(--xfont-mono) !important;
+  background:rgba(14,18,32,0.55) !important;
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border:1px solid var(--xline) !important;border-radius:10px !important;
+  padding:10px 14px !important;
+}
+.up-char-name{
+  font-family:var(--xfont-disp) !important;font-weight:600 !important;
+  letter-spacing:.06em !important;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.up-char-name::before{content:'▸ ';color:var(--gold);-webkit-text-fill-color:var(--gold);font-family:var(--xfont-mono);font-size:.85em}
+.up-char-stars{color:var(--gold) !important;font-size:.78rem !important;letter-spacing:.18em !important;font-family:var(--xfont-mono) !important}
+.up-char-desc{font-family:var(--xfont-mono) !important;font-size:.74rem !important;color:#c8c4b0 !important;letter-spacing:.04em !important;line-height:1.6 !important}
+
+/* — Bottom bar buttons — */
+.bottom-bar{
+  background:rgba(8,12,22,0.42) !important;
+  border-top:1px solid var(--xline2) !important;
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+}
+.btn-wish{
+  font-family:var(--xfont-mono) !important;
+  letter-spacing:.16em !important;text-transform:none !important;
+  background:rgba(14,18,32,0.6) !important;
+  border:1px solid var(--xline) !important;
+  color:var(--g3) !important;
+  border-radius:8px !important;
+  position:relative;overflow:hidden;
+  transition:all .25s ease !important;
+}
+.btn-wish::before{content:'▸  ';color:var(--gold);font-weight:700}
+.btn-wish:hover{
+  background:rgba(212,184,122,0.10) !important;
+  border-color:var(--gold) !important;
+  box-shadow:0 0 30px rgba(212,184,122,0.2);
+}
+.btn-wish-x10{
+  background:linear-gradient(180deg,rgba(212,184,122,0.18),rgba(212,184,122,0.06)) !important;
+  border-color:var(--gold) !important;color:var(--g3) !important;
+}
+.btn-wish-x10:hover{box-shadow:0 0 40px rgba(212,184,122,0.32)}
+.btn-wish .fate-dot{display:none !important}
+
+/* pity pill */
+.pity-pill{
+  font-family:var(--xfont-mono) !important;
+  background:rgba(14,18,32,0.55) !important;
+  border:1px solid var(--xline2) !important;border-radius:8px !important;
+  font-size:.7rem !important;letter-spacing:.08em !important;
+  color:var(--t2) !important;
+  padding:6px 10px !important;
+}
+.pity-pill .pity-num{color:var(--g3) !important;font-weight:700 !important}
+
+/* — Float orbs (?,history) — */
+.float-orb{
+  font-family:var(--xfont-mono) !important;
+  background:rgba(14,18,32,0.6) !important;
+  border:1px solid var(--xline) !important;
+  color:var(--gold) !important;
+  border-radius:8px !important;
+}
+.float-orb:hover{background:rgba(212,184,122,0.12) !important;box-shadow:0 0 24px rgba(212,184,122,0.18)}
+
+/* — Details panel — */
+#details-panel{
+  background:rgba(14,18,32,0.78) !important;
+  backdrop-filter:blur(22px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(140%) !important;
+  border-left:1px solid var(--xline) !important;
+  font-family:var(--xfont-mono) !important;
+}
+#details-panel h3,#details-panel h2{
+  font-family:var(--xfont-disp) !important;letter-spacing:.12em !important;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+#details-panel h3::before{content:'X[ ';color:#7aa9ff;-webkit-text-fill-color:#7aa9ff;font-family:var(--xfont-mono);font-size:.8em}
+#details-panel h3::after{content:' ]';color:#7aa9ff;-webkit-text-fill-color:#7aa9ff;font-family:var(--xfont-mono);font-size:.8em}
+.prob-table{font-family:var(--xfont-mono) !important;font-size:.78rem !important}
+.prob-table td,.prob-table th{
+  border-color:var(--xline2) !important;
+  padding:8px 10px !important;letter-spacing:.05em;
+}
+.prob-table .gold{color:var(--gold) !important}
+.prob-table .purple{color:var(--purple) !important}
+.prob-note{
+  font-family:var(--xfont-mono) !important;
+  color:var(--t2) !important;font-size:.7rem !important;
+  letter-spacing:.04em;line-height:1.6;
+  border-left:2px solid var(--xline);padding:8px 10px;
+  background:rgba(212,184,122,0.04);border-radius:0 6px 6px 0;
+}
+
+/* — History rows — */
+.hist-row{
+  font-family:var(--xfont-mono) !important;
+  border:1px solid var(--xline2) !important;
+  border-radius:8px !important;
+  background:rgba(14,18,32,0.4) !important;
+  margin-bottom:6px !important;
+}
+.hist-row.s5{border-color:rgba(212,184,122,0.4) !important;background:rgba(212,184,122,0.06) !important}
+.hist-row.s6{border-color:rgba(255,184,198,0.5) !important;background:rgba(255,184,198,0.06) !important}
+.hist-row.s4{border-color:rgba(176,143,255,0.35) !important}
+.hist-mid-name{font-family:var(--xfont-mono) !important;font-size:.82rem !important;letter-spacing:.04em !important}
+.hist-mid-time{font-family:var(--xfont-mono) !important;font-size:.66rem !important;letter-spacing:.08em !important;color:var(--t2) !important}
+
+/* — Skip / Result buttons — */
+.btn-skip,.btn-result{
+  font-family:var(--xfont-mono) !important;
+  letter-spacing:.16em !important;
+  background:rgba(14,18,32,0.6) !important;
+  border:1px solid var(--xline) !important;
+  border-radius:8px !important;color:var(--g3) !important;
+  text-transform:none !important;
+}
+.btn-skip:hover,.btn-result:hover{background:rgba(212,184,122,0.12) !important}
+.btn-result.primary{
+  background:linear-gradient(180deg,rgba(212,184,122,0.22),rgba(212,184,122,0.08)) !important;
+  border-color:var(--gold) !important;
+}
+.btn-result::before,.btn-skip::before{content:'▸  ';color:var(--gold);font-weight:700}
+
+/* — Card reveal · 简化卡背 emblem，统一 X 标 — */
+.card-back-emblem .card-back-star{
+  font-family:var(--xfont-disp) !important;
+}
+
+/* — Card front name 用衬线大字保持仪式感（这里是少有的非等宽区） — */
+.card-name{
+  font-family:var(--xfont-disp) !important;letter-spacing:.06em !important;
+}
+.card-stars{font-family:var(--xfont-mono) !important;letter-spacing:.18em !important}
+.card-desc{font-family:var(--xfont-mono) !important;font-size:.74rem !important;letter-spacing:.04em !important;line-height:1.6 !important;color:#c8c4b0 !important}
+.card-rarity-badge{font-family:var(--xfont-mono) !important;letter-spacing:.12em !important}
+
+/* — Mini game popup 也微调（不破坏功能） — */
+#mg-board,.mg-modal{font-family:var(--xfont-mono) !important}
+
+/* — Splash glow 颜色微调，与 index 调和 — */
+.banner-title-glow{filter:saturate(.9)}
+
+/* — Disable the noisy "blob" drift (太花) — */
+.glass-blob{animation:none !important;filter:blur(140px) !important;opacity:.32 !important}
+
+/* — Fate dot in btn 已隐藏；让 sweep 也低调 — */
+.btn-wish .sweep{opacity:.5 !important}
+
+/* ============================================================
+   ▼ XLAB · WISH FX POLISH ▼
+   不改 JS / 不改时序；只升级动画曲线、色彩、层级、辉光
+============================================================ */
+
+/* — 星门：多环色散+缓动更柔和 — */
+.stargate.activate{animation:gate-open 2.2s cubic-bezier(.22,1,.36,1) forwards !important}
+.stargate-ring{box-shadow:0 0 32px rgba(212,184,122,.18),0 0 6px rgba(255,232,180,.4) inset !important;filter:saturate(1.1)}
+.stargate-core{
+  background:radial-gradient(circle,rgba(255,240,200,.95) 0%,rgba(255,200,120,.6) 30%,rgba(176,143,255,.25) 60%,transparent 100%) !important;
+  filter:blur(.5px) saturate(1.2) !important;
+}
+
+/* — 流星：更长的拖尾、双层发光 — */
+.meteor{
+  width:32px !important;height:32px !important;
+  filter:drop-shadow(0 0 14px currentColor) drop-shadow(0 0 32px currentColor) !important;
+}
+.meteor.streak-5{background:radial-gradient(circle,#fff8dc 0%,#ffd66b 35%,rgba(255,214,107,0) 75%) !important;color:#ffd66b}
+.meteor.streak-6{background:radial-gradient(circle,#fff 0%,#ffb8c6 30%,rgba(255,184,198,0) 75%) !important;color:#ffb8c6}
+.meteor.streak-4{background:radial-gradient(circle,#fff 0%,#c8b0ff 30%,rgba(200,176,255,0) 75%) !important;color:#c8b0ff}
+.meteor-trail{
+  height:3px !important;
+  filter:blur(1px) saturate(1.3) !important;
+}
+.meteor.fly{animation:meteor-fly 1.45s cubic-bezier(.5,0,.25,1) forwards !important}
+.meteor-trail.fly{animation:trail-fly 1.45s cubic-bezier(.5,0,.25,1) forwards !important}
+
+/* — Impact 双 shockwave 改为 dispersion ring — */
+.shockwave{
+  border-width:2px !important;
+  box-shadow:0 0 40px rgba(212,184,122,.5),inset 0 0 30px rgba(212,184,122,.3) !important;
+  mix-blend-mode:screen;
+}
+.impact-flash.burst-5,.impact-flash.burst-6{
+  filter:blur(.5px) saturate(1.2) !important;
+}
+
+/* — 光柱：更细 + 顶端散开 — */
+.light-pillar{
+  filter:blur(.3px) saturate(1.15) drop-shadow(0 0 60px rgba(255,224,160,.55)) !important;
+}
+.light-pillar::after{
+  content:'';position:absolute;left:50%;top:0;
+  width:180%;height:60px;transform:translateX(-50%);
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,232,180,.55),transparent 70%);
+  opacity:.85;pointer-events:none;
+}
+
+/* — Lens flare 加色散辐射 — */
+.lens-flare{
+  mix-blend-mode:screen !important;
+  filter:saturate(1.2) blur(.4px) !important;
+}
+
+/* — Fullscreen flash 改成柔和金黄 + 紫边 — */
+#fullscreen-flash{
+  background:radial-gradient(ellipse at 50% 50%,rgba(255,232,180,.45) 0%,rgba(176,143,255,.18) 40%,transparent 75%) !important;
+}
+
+/* — 卡牌入场：更"沉"的弹入曲线 + 提升玻璃感 — */
+.card-3d{transition:transform .85s cubic-bezier(.18,1.1,.32,1.02),opacity .5s ease !important}
+.card-3d .card-face{
+  box-shadow:
+    0 30px 60px -15px rgba(0,0,0,.7),
+    0 16px 32px -12px rgba(0,0,0,.5),
+    0 0 0 1px rgba(212,184,122,.18) !important;
+  border-radius:14px !important;
+}
+.card-3d .card-front{
+  background:linear-gradient(180deg,#1a1428 0%,#0c0a16 100%) !important;
+}
+.card-3d .card-front::before{
+  content:'';position:absolute;inset:0;border-radius:14px;pointer-events:none;z-index:4;
+  border:1px solid rgba(245,230,204,.16);
+  box-shadow:0 1px 0 rgba(255,255,255,.10) inset,0 0 60px -8px rgba(212,184,122,.18) inset;
+}
+.card-3d.s5-card .card-front::after,
+.card-3d.s6-card .card-front::after{
+  content:'';position:absolute;left:10%;right:10%;top:6%;height:34%;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),transparent);
+  border-radius:14px 14px 60% 60%/14px 14px 100% 100%;
+  pointer-events:none;mix-blend-mode:overlay;z-index:4;opacity:.55;
+}
+
+/* — 6★ glow 加强 — */
+.card-3d.s6-card .card-face{
+  box-shadow:
+    0 50px 90px -20px rgba(0,0,0,.85),
+    0 26px 50px -15px rgba(255,184,198,.42),
+    0 0 0 1.5px rgba(255,184,198,.55),
+    0 0 100px -8px rgba(255,184,198,.45) !important;
+}
+.card-3d.s5-card .card-face{
+  box-shadow:
+    0 50px 90px -20px rgba(0,0,0,.85),
+    0 26px 50px -15px rgba(212,184,122,.42),
+    0 0 0 1.5px rgba(240,210,138,.55),
+    0 0 100px -8px rgba(240,210,138,.4) !important;
+}
+.card-3d.s4-card .card-face{
+  box-shadow:
+    0 46px 80px -18px rgba(0,0,0,.8),
+    0 22px 44px -14px rgba(176,143,255,.32),
+    0 0 0 1.2px rgba(176,143,255,.42),
+    0 0 80px -8px rgba(176,143,255,.28) !important;
+}
+
+/* — wormhole 颜色与 index 着色器协调 — */
+.wormhole{
+  background:
+    radial-gradient(circle at 50% 50%,
+      rgba(255,255,255,0) 0%,
+      rgba(255,232,180,.22) 18%,
+      rgba(176,143,255,.18) 32%,
+      rgba(60,30,140,.10) 48%,
+      transparent 68%) !important;
+  mix-blend-mode:screen !important;
+}
+
+/* — Chromatic aberration 更细腻 — */
+.chroma.on{animation:chroma-burst .85s cubic-bezier(.22,1,.36,1) !important}
+
+/* — 6★ 屏幕裂痕：金光层级 — */
+.god-mode.on .god-crack{filter:drop-shadow(0 0 50px #ffd07a) drop-shadow(0 0 140px #ffaa44) saturate(1.2)}
+.god-mode.on .god-text{
+  text-shadow:0 0 80px rgba(255,200,80,.7),0 0 30px rgba(255,232,180,.85) !important;
+}
+
+/* — Gold drops（金色光点雨）：加大粒径与拖影 — */
+.gold-drop{
+  filter:drop-shadow(0 0 6px rgba(255,232,180,.7)) drop-shadow(0 0 18px rgba(255,200,120,.5)) !important;
+}
+
+/* — 跳过按钮位置/层级保持顶层 — */
+.btn-skip{z-index:9100 !important}
+
+/* ============================================================
+   ▼ XLAB · LAYOUT REWORK (Genshin/StarRail-inspired) ▼
+   - 三层信息架构：顶栏(身份+资源) / 中段(展示) / 底栏(行动)
+   - pity 上移到顶栏右侧，归为「数据」
+   - 4★ UP 改为右侧竖排卡片条（不再霸占底栏）
+   - 底栏只留两个按钮：10x 主视觉、1x 次按钮，右对齐
+   - 加卡池信息条（剩余时间 + 当前期次）
+============================================================ */
+
+/* — 顶栏增加 pity 区 — */
+.top-bar{display:flex !important;align-items:center !important;gap:14px !important}
+.top-right{display:flex !important;align-items:center !important;gap:10px !important}
+
+.top-pity{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 12px;
+  background:rgba(14,18,32,0.6);
+  border:1px solid var(--xline2);border-radius:8px;
+  font-family:var(--xfont-mono);font-size:.7rem;letter-spacing:.06em;
+  color:var(--t2);
+}
+.top-pity .pp-block{display:flex;align-items:center;gap:6px}
+.top-pity .pp-label{color:var(--t2);font-size:.65rem;letter-spacing:.16em}
+.top-pity .pp-num{color:var(--g3);font-weight:700;font-size:.85rem;font-variant-numeric:tabular-nums}
+.top-pity .pp-num.s5{color:var(--gold)}
+.top-pity .pp-num.s6{color:#FFB8C6}
+.top-pity .pp-sep{color:var(--t3);opacity:.5}
+.top-pity.danger .pp-num.s5,.top-pity.danger .pp-num.s6{
+  animation:pp-flash .8s ease-in-out infinite;
+  text-shadow:0 0 12px currentColor;
+}
+@keyframes pp-flash{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* 隐藏底栏旧 pity-pill（移上去后这里不再需要） */
+.bottom-bar .pity-pill{display:none !important}
+
+/* — 卡池信息条（顶栏下方） — */
+.banner-ribbon{
+  position:relative;z-index:9;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:6px 22px;
+  background:linear-gradient(180deg,rgba(14,18,32,0.5),rgba(14,18,32,0.15));
+  border-bottom:1px solid var(--xline2);
+  font-family:var(--xfont-mono);font-size:.7rem;
+  letter-spacing:.12em;color:var(--t2);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.banner-ribbon .br-left{display:flex;align-items:center;gap:14px}
+.banner-ribbon .br-tag{
+  padding:2px 8px;border:1px solid var(--xline);border-radius:3px;
+  color:var(--gold);font-weight:600;letter-spacing:.18em;
+  background:rgba(212,184,122,0.06);
+}
+.banner-ribbon .br-name{color:var(--text);letter-spacing:.06em}
+.banner-ribbon .br-name b{color:var(--g3);font-weight:600}
+.banner-ribbon .br-timer{
+  display:flex;align-items:center;gap:8px;color:var(--t2);
+}
+.banner-ribbon .br-timer-num{
+  color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums;
+  font-size:.78rem;
+}
+.banner-ribbon .br-bar{
+  flex:1;max-width:240px;height:3px;border-radius:2px;
+  background:rgba(255,255,255,0.06);overflow:hidden;
+}
+.banner-ribbon .br-bar-fill{
+  height:100%;background:linear-gradient(90deg,var(--gold),var(--purple));
+  border-radius:2px;transition:width .6s ease;
+}
+
+/* — 中央展示区：让 splash 更主导 — */
+.center-stage{padding:18px 28px !important}
+.splash-wrap{max-height:none !important}
+.splash-frame{filter:drop-shadow(0 30px 80px rgba(0,0,0,.65))}
+
+/* — 4★ UP 改右侧竖排卡片条 — */
+.up4-corner{
+  /* 从底部右下移到右侧竖排 */
+  position:absolute !important;
+  top:50% !important;right:14px !important;bottom:auto !important;left:auto !important;
+  transform:translateY(-50%) !important;
+  flex-direction:column !important;gap:8px !important;
+  padding:0 !important;
+  pointer-events:auto !important;
+  z-index:5 !important;
+}
+.up4-card{
+  width:64px !important;height:88px !important;aspect-ratio:auto !important;
+  border-radius:8px !important;
+  border:1px solid rgba(176,143,255,0.4) !important;
+  background:rgba(20,14,40,0.7) !important;
+  box-shadow:0 6px 18px rgba(0,0,0,.5),0 0 18px rgba(176,143,255,.12) !important;
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease !important;
+  cursor:pointer;
+}
+.up4-card:hover{
+  transform:translateX(-6px) scale(1.06) !important;
+  border-color:var(--purple) !important;
+  box-shadow:0 10px 28px rgba(0,0,0,.6),0 0 28px rgba(176,143,255,.32) !important;
+}
+.up4-card::before,.up4-card::after{display:none !important}
+.up4-card .up4-img{border-radius:7px !important}
+.up4-card .up4-name{
+  font-family:var(--xfont-mono) !important;font-size:.55rem !important;
+  letter-spacing:.04em !important;padding:2px 4px !important;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.85)) !important;
+}
+.up4-card .up4-stars{display:none !important}
+
+/* 4★ 标签 */
+.up4-corner::before{
+  content:'4★ UP';display:block;
+  font-family:var(--xfont-mono);font-size:.55rem;letter-spacing:.22em;
+  color:var(--purple);text-align:center;
+  padding:3px 6px;border:1px solid rgba(176,143,255,.35);border-radius:4px;
+  background:rgba(176,143,255,.06);margin-bottom:4px;
+}
+
+/* — 角色介绍卡片（splash 文字）：左下定位，扁平卡片 — */
+.up-char-info{
+  position:absolute !important;
+  left:24px !important;bottom:24px !important;right:auto !important;
+  max-width:380px !important;
+  text-align:left !important;
+  padding:14px 18px !important;
+  border-radius:10px !important;
+}
+
+/* — 底栏重做：右对齐 + 10x 主视觉 — */
+.bottom-bar{
+  justify-content:flex-end !important;
+  align-items:center !important;
+  gap:14px !important;
+  padding:0 28px 22px !important;
+  min-height:96px !important;
+}
+.btn-wish-wrap{
+  flex-direction:row !important;
+  align-items:center !important;
+  gap:14px !important;
+}
+/* 1x 次按钮 */
+#btn-single.btn-wish{
+  padding:11px 26px !important;font-size:.82rem !important;
+  background:rgba(14,18,32,0.55) !important;
+  border:1px solid var(--xline) !important;
+  color:var(--g3) !important;
+  letter-spacing:.14em !important;
+  min-width:auto !important;
+  order:1;
+}
+/* 10x 主按钮：更大、双线描边、金色辉光 */
+#btn-ten.btn-wish-x10{
+  padding:14px 36px !important;font-size:.92rem !important;
+  font-weight:600 !important;
+  background:
+    linear-gradient(180deg,rgba(212,184,122,0.28),rgba(212,184,122,0.08)) !important;
+  border:1px solid var(--gold) !important;
+  box-shadow:
+    0 0 0 1px rgba(245,230,204,0.18) inset,
+    0 8px 24px rgba(0,0,0,0.45),
+    0 0 30px rgba(212,184,122,0.22) !important;
+  color:#fff !important;
+  letter-spacing:.16em !important;
+  min-width:auto !important;
+  order:2;position:relative;
+}
+#btn-ten.btn-wish-x10:hover{
+  box-shadow:
+    0 0 0 1px rgba(245,230,204,0.32) inset,
+    0 10px 32px rgba(0,0,0,0.5),
+    0 0 50px rgba(212,184,122,0.45) !important;
+  transform:translateY(-1px);
+}
+/* 在 10x 按钮顶部加一个推荐标签 */
+#btn-ten.btn-wish-x10::after{
+  content:'RECOMMEND';
+  position:absolute;top:-8px;right:14px;
+  font-size:.55rem;letter-spacing:.22em;font-weight:700;
+  color:#0a0a18;background:var(--gold);
+  padding:2px 6px;border-radius:3px;
+  font-family:var(--xfont-mono);
+}
+
+/* 底栏左侧加一个状态行 */
+.bb-status{
+  margin-right:auto;display:flex;align-items:center;gap:14px;
+  font-family:var(--xfont-mono);font-size:.7rem;letter-spacing:.08em;color:var(--t2);
+}
+.bb-status .bb-key{color:var(--gold);font-weight:600}
+.bb-status .bb-val{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.bb-status .bb-sep{color:var(--t3);opacity:.4}
+
+/* — Right floats：和 4★ UP 区错开，下移 — */
+.right-floats{
+  top:auto !important;bottom:118px !important;right:24px !important;
+  flex-direction:row !important;gap:8px !important;
+}
+.float-orb{width:38px !important;height:38px !important;font-size:.85rem !important}
+
+/* — [POLISH] 视觉微调 — */
+
+/* sacred rings 再淡一层，突出 splash */
+.sacred-ring{opacity:.55 !important}
+.sacred-ring.r1{width:380px !important;height:380px !important}
+.sacred-ring.r2{width:320px !important;height:320px !important}
+.sacred-ring.r3{width:260px !important;height:260px !important}
+.sacred-ring.r4{width:460px !important;height:460px !important}
+
+/* splash 放大 + 微阴影 */
+.splash-frame{
+  max-width:min(440px,52vw) !important;
+  filter:drop-shadow(0 40px 80px rgba(0,0,0,.7)) drop-shadow(0 0 40px rgba(212,184,122,.14)) !important;
+}
+.splash-img{border-radius:10px !important}
+
+/* UP char info 上推一点，避开底部进度环 */
+.up-char-info{bottom:32px !important;left:28px !important}
+
+/* 4★ UP 卡片：和 right-floats 错开 */
+.up4-corner{
+  right:18px !important;
+  gap:10px !important;
+}
+.up4-card{width:72px !important;height:98px !important;border-radius:9px !important}
+
+/* banner ribbon 更紧凑 */
+.banner-ribbon{padding:5px 22px !important}
+
+/* bottom bar 微调 */
+.bottom-bar{padding:0 28px 20px !important}
+
+/* 移动端补充 */
+@media(max-width:760px){
+  .splash-frame{max-width:min(260px,68vw) !important}
+  .splash-img{border-radius:8px !important}
+  .sacred-ring.r1{width:260px !important;height:260px !important}
+  .sacred-ring.r2{width:220px !important;height:220px !important}
+  .sacred-ring.r3{width:180px !important;height:180px !important}
+  .sacred-ring.r4{width:310px !important;height:310px !important}
+}
+
+/* — 移动端：恢复合理布局 — */
+@media(max-width:760px){
+  .banner-ribbon{padding:5px 12px;font-size:.62rem}
+  .banner-ribbon .br-bar{display:none}
+  .top-pity{padding:4px 8px;font-size:.62rem;gap:6px}
+  .top-pity .pp-num{font-size:.75rem}
+  .up4-corner{
+    top:auto !important;bottom:108px !important;right:8px !important;
+    transform:none !important;flex-direction:row !important;gap:6px !important;
+  }
+  .up4-corner::before{display:none !important}
+  .up4-card{width:42px !important;height:60px !important}
+  .up-char-info{left:14px !important;bottom:auto !important;top:60px !important;max-width:60vw !important;font-size:.72rem !important}
+  .bottom-bar{padding:0 14px 14px !important;gap:8px !important}
+  #btn-ten.btn-wish-x10{padding:11px 22px !important;font-size:.78rem !important}
+  #btn-single.btn-wish{padding:9px 16px !important;font-size:.72rem !important}
+  #btn-ten.btn-wish-x10::after{display:none !important}
+  .bb-status{display:none !important}
+  .right-floats{bottom:88px !important}
+}
+</style>
 </head>
 <body>
 
@@ -1544,14 +2368,32 @@ body{
       <span class="banner-name" id="banner-name">角色活动祈愿</span>
     </div>
     <div class="top-right">
+      <div class="top-pity" id="top-pity" title="保底进度">
+        <div class="pp-block"><span class="pp-label">5★</span><span class="pp-num s5" id="tp-rem">90</span></div>
+        <span class="pp-sep">·</span>
+        <div class="pp-block"><span class="pp-label">6★</span><span class="pp-num s6" id="tp-6-rem">300</span></div>
+      </div>
       <div class="res-card">
         <div class="res-icon"></div>
-        <span class="res-num" id="fate-num">5</span>
+        <span class="res-num" id="fate-num">25</span>
         <span class="res-label" id="fate-label">纠缠之缘</span>
       </div>
       <button class="btn-exchange">星辉兑换</button>
       <button class="icon-minigame" id="btn-minigame" title="锤子游戏">🔨</button>
       <button class="icon-mute" id="btn-mute" title="音效">🔊</button>
+    </div>
+  </div>
+
+  <!-- BANNER RIBBON -->
+  <div class="banner-ribbon" id="banner-ribbon">
+    <div class="br-left">
+      <span class="br-tag" id="br-tag">EVENT</span>
+      <span class="br-name" id="br-name">期次 <b>—</b> · <b id="br-banner">—</b></span>
+    </div>
+    <div class="br-timer">
+      <span>剩余</span>
+      <span class="br-timer-num" id="br-timer-num">--d --h --m</span>
+      <div class="br-bar"><div class="br-bar-fill" id="br-bar-fill" style="width:0%"></div></div>
     </div>
   </div>
 
@@ -1606,13 +2448,20 @@ body{
 
   <!-- BOTTOM BAR -->
   <div class="bottom-bar">
+    <div class="bb-status" id="bb-status">
+      <span><span class="bb-key">▸ session</span> <span class="bb-val" id="bb-session">0</span></span>
+      <span class="bb-sep">|</span>
+      <span><span class="bb-key">total</span> <span class="bb-val" id="bb-total">0</span></span>
+      <span class="bb-sep">|</span>
+      <span><span class="bb-key">5★</span> <span class="bb-val" id="bb-5star">0</span></span>
+    </div>
     <button class="btn-wish" id="btn-single">
-      <span class="sweep"></span><span class="fate-dot"></span>祈愿1次
+      <span class="sweep"></span><span class="fate-dot"></span>wish --pulls=1
     </button>
     <div class="btn-wish-wrap">
-      <div class="pity-pill" id="pity-pill">5★保底 <span class="pity-num" id="pity-rem">90</span>次 · 6★保底 <span class="pity-num" id="pity-6-rem">300</span>次</div>
+      <div class="pity-pill" id="pity-pill"><span class="pity-ring" id="pity-ring"><svg viewBox="0 0 36 36"><circle class="pr-bg" cx="18" cy="18" r="15"></circle><circle class="pr-fg" cx="18" cy="18" r="15" stroke-dasharray="94.25" stroke-dashoffset="0"></circle></svg></span>pity[5★] <span class="pity-num" id="pity-rem">90</span> · pity[6★] <span class="pity-num" id="pity-6-rem">300</span></div>
       <button class="btn-wish btn-wish-x10" id="btn-ten">
-        <span class="sweep"></span><span class="fate-dot"></span>祈愿10次
+        <span class="sweep"></span><span class="fate-dot"></span>wish --pulls=10
       </button>
     </div>
   </div>
@@ -1686,6 +2535,16 @@ body{
 <div class="lens-flare" id="lens-flare"></div>
 <div class="light-pillar" id="light-pillar"></div>
 
+<!-- ▼ GEEK FX LAYERS -->
+<div class="wormhole" id="wormhole"></div>
+<div class="chroma" id="chroma"></div>
+<div class="god-mode" id="god-mode">
+  <div class="god-crack"></div>
+  <div class="god-glitch"></div>
+  <div class="god-text">CREATOR · GOD</div>
+</div>
+<div class="pity-edge-pulse" id="pity-edge"></div>
+
 <!-- ▼ CARD REVEAL STAGE -->
 <div id="card-stage">
   <div class="card-deck" id="card-deck"></div>
@@ -1693,10 +2552,10 @@ body{
 
 <!-- Result controls -->
 <div class="result-controls" id="result-controls">
-  <button class="btn-result" id="btn-again">再次祈愿</button>
-  <button class="btn-result primary" id="btn-confirm">确认</button>
+  <button class="btn-result" id="btn-again">再次祈愿 [R]</button>
+  <button class="btn-result primary" id="btn-confirm">确认 [Enter]</button>
 </div>
-<button class="btn-skip" id="btn-skip">跳过 »</button>
+<button class="btn-skip" id="btn-skip">skip »</button>
 
 <script>
 (function(){
@@ -1752,6 +2611,8 @@ const BN=[
 
 /* State */
 let S={bn:0,total:0,p5:[0,0,0],p4:[0,0,0],p6:[0,0,0],guar:[false,false,false],hist:[],muted:false};
+/* Session-only counter (本次会话抽数) */
+S.sess=0;
 
 /* DOM shortcuts */
 const Q=s=>document.querySelector(s);
@@ -1979,6 +2840,12 @@ function runWishAnimation(rs,n){
   stargate.classList.remove('activate');void stargate.offsetWidth;
   stargate.classList.add('activate');
   sndGate();
+  // [GEEK] wormhole cone fades in during the gate phase for 5★/6★
+  if(maxR>=5){
+    const wh=Q('#wormhole');
+    if(wh){wh.classList.add('on');setTimeout(()=>wh.classList.remove('on'),3200);}
+    if(window.GeekSFX) GeekSFX.whoosh();
+  }
 
   // PHASE 2: Meteor flies in (700 - 2100ms)
   ad(()=>{
@@ -2026,6 +2893,24 @@ function runWishAnimation(rs,n){
     void sw1.offsetWidth;void sw2.offsetWidth;
     sw1.classList.add('burst');sw2.classList.add('burst');
     sndImpact();
+    // [GEEK] chromatic aberration ring on impact
+    const ch=Q('#chroma');
+    if(ch){ch.classList.remove('on');void ch.offsetWidth;ch.classList.add('on');}
+    // [GEEK] 6★ creator-god full-screen演出
+    if(maxR===6){
+      const gm=Q('#god-mode');
+      const app=Q('#app');
+      if(gm){gm.classList.remove('on');void gm.offsetWidth;gm.classList.add('on');setTimeout(()=>gm.classList.remove('on'),3200);}
+      if(app){app.classList.remove('slow-mo');void app.offsetWidth;app.classList.add('slow-mo');setTimeout(()=>app.classList.remove('slow-mo'),2400);}
+      if(window.GeekSFX) GeekSFX.reveal6();
+      if(window.GeekSFX) setTimeout(()=>GeekSFX.glitch(),200);
+    }else if(maxR===5){
+      if(window.GeekSFX) GeekSFX.reveal5();
+    }else if(maxR===4){
+      if(window.GeekSFX) GeekSFX.reveal4();
+    }else{
+      if(window.GeekSFX) GeekSFX.reveal3();
+    }
     // Particle burst
     const cx=window.innerWidth/2,cy=window.innerHeight/2;
     const col=maxR===6?'rgb(255,184,198)':maxR===5?'rgb(255,220,140)':maxR===4?'rgb(200,160,255)':'rgb(180,200,230)';
@@ -2081,6 +2966,12 @@ function buildCards(rs,n){
       </div>
     `;
     cardDeck.appendChild(el);
+    // [GEEK] holographic foil for 5★/6★
+    if(r.rarity>=5 && window.GeekLayer){
+      const inner=el.querySelector('.card-3d-inner');
+      const front=el.querySelector('.card-front');
+      if(front) GeekLayer.attachHolo(front);
+    }
     // Stagger materialization
     ad(()=>{el.classList.add('materialize')},i*70);
   });
@@ -2212,6 +3103,7 @@ function doDraw(n){
   const fc=Q('#fate-num');let v=parseInt(fc.textContent)||0;
   if(v<n){showToast('「'+BN[S.bn].fate+'」不足，试试右上角 🔨 赚取吧！');return}
   sndButton();
+  S.sess=(S.sess||0)+n;
   // Generate results
   const bi=S.bn,p6Start=S.p6[bi];
   const rs=[];for(let i=0;i<n;i++)rs.push(draw1());
@@ -2246,7 +3138,32 @@ function updatePity(){
   const rem6=300-S.p6[i];
   Q('#pity-rem').textContent=rem5;
   Q('#pity-6-rem').textContent=Math.max(rem6,0);
-  Q('#pity-pill').classList.toggle('warning',rem5<=10||rem6<=20);
+  // [LAYOUT] mirror to top bar
+  const tp5=Q('#tp-rem'),tp6=Q('#tp-6-rem'),tp=Q('#top-pity');
+  if(tp5) tp5.textContent=rem5;
+  if(tp6) tp6.textContent=Math.max(rem6,0);
+  const danger=rem5<=10||rem6<=20;
+  Q('#pity-pill').classList.toggle('warning',danger);
+  if(tp) tp.classList.toggle('danger',danger);
+  // ring fill
+  const ring=Q('#pity-ring');
+  if(ring){
+    const fg=ring.querySelector('.pr-fg');
+    const C=2*Math.PI*15;
+    const prog=Math.min(1,S.p5[i]/P5);
+    if(fg){fg.setAttribute('stroke-dasharray',C);fg.setAttribute('stroke-dashoffset',C*(1-prog));}
+    ring.classList.toggle('danger',danger);
+  }
+  const edge=Q('#pity-edge');
+  if(edge) edge.classList.toggle('on',rem5<=5||rem6<=10);
+  // [LAYOUT] bottom-bar status
+  const bbT=Q('#bb-total'),bbS=Q('#bb-session'),bb5=Q('#bb-5star');
+  if(bbT) bbT.textContent=S.total||0;
+  if(bbS) bbS.textContent=S.sess||0;
+  if(bb5){
+    const c5=(S.hist||[]).filter(h=>h.rarity>=5).length;
+    bb5.textContent=c5;
+  }
 }
 function updateAll(){
   updatePity();
@@ -2286,6 +3203,14 @@ function updateAll(){
   Q('#banner-name').textContent=b.name;
   Q('#fate-label').textContent=b.fate;
   Q('#banner-title-glow').textContent=b.name;
+  // [LAYOUT] banner ribbon
+  const brTag=Q('#br-tag'),brBanner=Q('#br-banner'),brName=Q('#br-name');
+  if(brTag) brTag.textContent=b.up5?'EVENT':'STANDARD';
+  if(brBanner) brBanner.textContent=b.name;
+  if(brName){
+    const idxRoman=['壹','贰','叁','肆','伍'][S.bn]||(S.bn+1);
+    brName.innerHTML='期次 <b>'+idxRoman+'</b> · <b>'+b.name+'</b>';
+  }
 
   // UP character info
   const upName=Q('#up-char-name'),upStars=Q('#up-char-stars'),upDesc=Q('#up-char-desc');
@@ -2384,6 +3309,29 @@ Q('#btn-again').addEventListener('click',()=>{
   setTimeout(()=>doDraw(n),300);
 });
 Q('#btn-confirm').addEventListener('click',endWish);
+/* [GEEK] 键盘快捷键 — 仅在结果面板显示时响应 R / Enter；Esc 跳过动画 */
+document.addEventListener('keydown',e=>{
+  // 不打断输入框
+  const t=e.target;
+  if(t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
+  if(t && t.isContentEditable) return;
+  // 动画进行中：Esc / Space 跳过
+  if(drawing){
+    if(e.key==='Escape'||e.key===' '){e.preventDefault();skipAnimation();}
+    return;
+  }
+  // 结果面板可见时
+  if(resCtl.classList.contains('show')){
+    const k=e.key.toLowerCase();
+    if(k==='r'){
+      e.preventDefault();
+      Q('#btn-again').click();
+    }else if(e.key==='Enter'||k==='enter'){
+      e.preventDefault();
+      Q('#btn-confirm').click();
+    }
+  }
+});
 // Click empty area on wish-stage to skip / close
 wishStage.addEventListener('click',e=>{
   if(drawing){skipAnimation()}
@@ -2450,6 +3398,7 @@ function endMinigame(){
   Q('#mg-total').textContent=mgState.earned;
   Q('#mg-gameover').classList.add('show');
   Q('#mg-timer').classList.remove('urgent');
+  Q('#mg-hammer').style.display='none'; // [BUGFIX] hide hammer when gameover shows
   document.body.style.cursor='';
   creditFate();
   playTone(523,0.15,'sine',0.08);
@@ -2562,6 +3511,15 @@ function loop(t){
 }
 function init(){
   initSF();rPC();load();
+  // [DAILY] consume reward queue from daily.html
+  try{
+    const q=JSON.parse(localStorage.getItem('wish_daily_queue')||'[]');
+    if(q.length){
+      const fc=Q('#fate-num');let v=parseInt(fc.textContent)||0;
+      q.forEach(r=>{v+=r.amount||0});
+      fc.textContent=v;localStorage.setItem('wish_daily_queue','[]');
+    }
+  }catch(e){}
   Q('#btn-mute').textContent=S.muted?'🔇':'🔊';
   renderTabs();updateAll();
   requestAnimationFrame(loop);
@@ -2569,5 +3527,29 @@ function init(){
 init();
 })();
 </script>
+<script>
+/* [LAYOUT] Banner ribbon countdown — 30-day rotating cycle (cosmetic) */
+(function(){
+  function fmt(){
+    const num=document.getElementById('br-timer-num');
+    const fill=document.getElementById('br-bar-fill');
+    if(!num||!fill) return;
+    const PERIOD=30*86400*1000;
+    const t0=parseInt(localStorage.getItem('xlab-first-visit')||Date.now(),10);
+    const elapsed=(Date.now()-t0)%PERIOD;
+    const remain=PERIOD-elapsed;
+    const d=Math.floor(remain/86400000);
+    const h=Math.floor(remain%86400000/3600000);
+    const m=Math.floor(remain%3600000/60000);
+    num.textContent=d+'d '+String(h).padStart(2,'0')+'h '+String(m).padStart(2,'0')+'m';
+    fill.style.width=(elapsed/PERIOD*100).toFixed(1)+'%';
+  }
+  fmt(); setInterval(fmt,30000);
+})();
+</script>
+<script src="assets/xlab-gl.js"></script>
+<script src="assets/wish-bg.js"></script>
+<script src="assets/wish-cinema.js"></script>
+<script src="assets/geek.js"></script>
 </body>
 </html>

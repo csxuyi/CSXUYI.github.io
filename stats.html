@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数据统计 · 星穹祈愿</title>
+<title>X[STATS] · xLab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -144,6 +144,30 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 .hist-item .h-name{flex:1;font-size:0.85rem}
 .hist-item .h-time{font-size:0.72rem;color:var(--t2);flex-shrink:0}
 
+/* [GEEK] Fortune card */
+.fortune-card .fortune-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+.fortune-card .fortune-date{font-family:"JetBrains Mono",ui-monospace,monospace;color:var(--t2);font-size:.72rem;letter-spacing:.12em}
+.fortune-body{display:flex;align-items:center;gap:24px}
+.fortune-gauge{position:relative;width:180px;flex-shrink:0}
+.fortune-gauge svg{width:100%;height:auto;display:block}
+.fortune-gauge #fortune-arc{transition:stroke-dashoffset 1.4s cubic-bezier(.22,1,.36,1),stroke .4s ease}
+.fortune-num{
+  position:absolute;left:0;right:0;bottom:6px;text-align:center;
+  font-family:"Cinzel","JetBrains Mono",ui-monospace,monospace;font-weight:700;
+  font-size:2.2rem;color:#F5E6CC;letter-spacing:.04em;
+  text-shadow:0 0 30px rgba(212,184,122,.5);
+}
+.fortune-info{flex:1}
+.fortune-level{
+  font-family:"Cinzel","Noto Serif SC",serif;font-weight:700;font-size:1.4rem;
+  background:linear-gradient(180deg,#F5E6CC,#D4B87A);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:.18em;margin-bottom:8px;
+}
+.fortune-tip{color:#c8c4b0;font-size:.92rem;line-height:1.6;margin-bottom:8px}
+.fortune-meta{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.7rem;color:var(--t2);letter-spacing:.08em}
+@media(max-width:520px){.fortune-body{flex-direction:column;gap:10px}.fortune-gauge{width:140px}}
+
 .empty-state{
   text-align:center;padding:40px;color:var(--t2);
   font-size:0.9rem;
@@ -171,6 +195,29 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 <main class="page">
   <h1 class="page-title">数 据 统 计</h1>
   <p class="page-subtitle">— STATISTICS —</p>
+
+  <!-- [GEEK] Today's fortune -->
+  <div class="glass-card fortune-card" id="fortune-card">
+    <div class="fortune-head">
+      <h3>今日欧气指数 · LUCK INDEX</h3>
+      <span class="fortune-date" id="fortune-date"></span>
+    </div>
+    <div class="fortune-body">
+      <div class="fortune-gauge">
+        <svg viewBox="0 0 120 70">
+          <path d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" stroke-linecap="round"/>
+          <path id="fortune-arc" d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="#D4B87A" stroke-width="8" stroke-linecap="round"
+                stroke-dasharray="157" stroke-dashoffset="157"/>
+        </svg>
+        <div class="fortune-num" id="fortune-num">--</div>
+      </div>
+      <div class="fortune-info">
+        <div class="fortune-level" id="fortune-level">CALCULATING...</div>
+        <div class="fortune-tip" id="fortune-tip">读取祈愿历史中...</div>
+        <div class="fortune-meta" id="fortune-meta"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- Top numbers -->
   <div class="top-stats" id="top-stats">
@@ -516,6 +563,82 @@ window.addEventListener('resize',()=>{
 });
 })();
 </script>
+
+<script>
+/* ============ [GEEK] Today's fortune (luck index) ============ */
+(function(){
+  const LV=[
+    {min:90,name:'大欧吉',  tips:['今日 5★ 必出，建议十连','保底已死，欧皇当立','屏幕亮度调到最高，迎接奇迹']},
+    {min:75,name:'欧',     tips:['手感在线，可以小赌','今日适合限定池','概率女神正在看你']},
+    {min:55,name:'平',     tips:['正常发挥，不冷不热','建议先抽个单抽试水','请保持微笑']},
+    {min:35,name:'非',     tips:['手感冰凉，请谨慎','建议改日再战','或者反向操作？说不定有惊喜']},
+    {min:0, name:'大非酋', tips:['今天连狗都不抽','3★ 都给你看哭','建议出门左转去签到，别抽了']},
+  ];
+
+  function loadHist(){
+    try{const raw=localStorage.getItem('wish_genshin_v5');if(!raw)return null;return JSON.parse(raw);}catch(e){return null;}
+  }
+  function dayKey(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+  // Pseudo-deterministic per-day per-user score, plus history bonus/malus
+  function compute(){
+    const s=loadHist();
+    let score=0,total=0,r5=0,r6=0,recent=0;
+    if(s){
+      total=s.total||0;
+      const hist=s.hist||[];
+      r5=hist.filter(h=>h.rarity===5).length;
+      r6=hist.filter(h=>h.rarity===6).length;
+      // recent unluck: how many pulls since last 5★+
+      for(const h of hist){if(h.rarity>=5)break;recent++;}
+    }
+    // base from day-of-year + a tiny user-stable hash
+    const d=new Date();
+    const doy=Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);
+    const userSeed=parseInt(localStorage.getItem('xlab-first-visit')||'1',10);
+    let h=2166136261>>>0;const str=dayKey()+'#'+userSeed;
+    for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}
+    const base=(h>>>0)%101; // 0..100
+    // Modulators
+    let mod=0;
+    if(recent>=70) mod+=20;          // close to pity → boost
+    else if(recent>=50) mod+=10;
+    if(r6>0) mod+=4;                 // god owners
+    if(total>=100&&r5===0) mod+=15;  // suffering bonus
+    if(total>0&&r5/Math.max(1,total)>0.05) mod-=8; // already lucky → regress
+    score=Math.max(0,Math.min(100,base+mod));
+    const lv=LV.find(l=>score>=l.min);
+    const tip=lv.tips[(h>>>3)%lv.tips.length];
+    return {score,level:lv.name,tip,total,r5,r6,recent};
+  }
+  window.GeekFortune={compute};
+
+  function render(){
+    const r=compute();
+    document.getElementById('fortune-num').textContent=r.score;
+    document.getElementById('fortune-level').textContent=r.level.toUpperCase();
+    document.getElementById('fortune-tip').textContent=r.tip;
+    document.getElementById('fortune-date').textContent=dayKey();
+    document.getElementById('fortune-meta').textContent=
+      'sample_size: '+r.total+'  ·  5★='+r.r5+'  ·  6★='+r.r6+'  ·  pity_streak='+r.recent;
+    // arc fill
+    const C=Math.PI*50; // half circle
+    const fg=document.getElementById('fortune-arc');
+    fg.setAttribute('stroke-dasharray',C);
+    fg.setAttribute('stroke-dashoffset',C);
+    requestAnimationFrame(()=>{
+      fg.setAttribute('stroke-dashoffset',C*(1-r.score/100));
+    });
+    // colour
+    const col=r.score>=75?'#7fffa3':r.score>=55?'#D4B87A':r.score>=35?'#B08FFF':'#FF7878';
+    fg.setAttribute('stroke',col);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',render);
+  else render();
+})();
+</script>
+<script src="assets/xlab-gl.js"></script>
+<script>window.addEventListener('DOMContentLoaded',()=>window.XLabGL && XLabGL.boot({preset:'cobalt-cyan'}));</script>
+<script src="assets/geek.js"></script>
 
 </body>
 </html>
