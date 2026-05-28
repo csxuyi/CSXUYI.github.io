@@ -616,19 +616,19 @@ window.addEventListener('mousemove',e=>{
 });
 
 function tick(){
-  currentX+=(targetX-currentX)*0.06;
-  currentY+=(targetY-currentY)*0.06;
-  cursorVX+=(cursorX-cursorVX)*0.18;
-  cursorVY+=(cursorY-cursorVY)*0.18;
+  currentX+=(targetX-currentX)*0.04;
+  currentY+=(targetY-currentY)*0.04;
+  cursorVX+=(cursorX-cursorVX)*0.12;
+  cursorVY+=(cursorY-cursorVY)*0.12;
   const damp=activeIdx===null?1:0.35;
-  fan.style.transform=`translate3d(${currentX*10*damp}px,${currentY*5*damp}px,0) rotateY(${currentX*14*damp}deg) rotateX(${-currentY*9*damp}deg)`;
+  fan.style.transform=`translate3d(${currentX*6*damp}px,${currentY*3*damp}px,0) rotateY(${currentX*8*damp}deg) rotateX(${-currentY*5*damp}deg)`;
   cursor.style.transform=`translate(${cursorVX}px,${cursorVY}px) translate(-50%,-50%)`;
   requestAnimationFrame(tick);
 }
 tick();
 
 let leaveTimer=null;
-fan.addEventListener('mouseleave',()=>{leaveTimer=setTimeout(resetAll,120)});
+fan.addEventListener('mouseleave',()=>{leaveTimer=setTimeout(resetAll,300)});
 fan.addEventListener('mouseenter',()=>{if(leaveTimer){clearTimeout(leaveTimer);leaveTimer=null}});
 document.addEventListener('mouseleave',()=>cursor.style.opacity='0');
 document.addEventListener('mouseenter',()=>cursor.style.opacity='1');

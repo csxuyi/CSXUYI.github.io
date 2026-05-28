@@ -1,42 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>星穹祈愿 · 主页</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ===== vortex canvas ===== */
+html,body{
+  margin:0px;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#000;
+}
+#canvas{
+  position:absolute;
+  width:100%;
+  height:100%;
+}
+
+/* ===== UI layer ===== */
 :root{
-  --bg0:#080e20;--bg1:#0c142e;--bg2:#111b3a;
   --gold:#D4B87A;--g2:#E8D5A3;--g3:#F5E6CC;--g4:#B89A50;
   --purple:#B08FFF;--p2:#c8b0ff;
-  --panel:rgba(12,20,42,0.72);--pborder:rgba(212,184,122,0.32);
   --text:#E8E0D0;--t2:#9999AA;
   --ft:"Noto Serif SC","STSong","SimSun",serif;
   --fu:"Inter","PingFang SC","Microsoft YaHei",sans-serif;
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden}
-body{
-  font-family:var(--fu);background:#05081a;color:var(--text);
-  -webkit-font-smoothing:antialiased;
-}
 
-canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+.vignette{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 40%, transparent 25%, rgba(0,0,0,0.6) 100%);
+}
 
 .hero{
-  position:relative;z-index:1;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:100%;padding:40px 20px;text-align:center;
+  position:fixed;inset:0;z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:18vh 20px 40px;text-align:center;pointer-events:none;
+  transition:opacity 0.5s ease, transform 0.6s cubic-bezier(0.22,1,0.36,1);
 }
+.hero>*{pointer-events:auto}
+.hero.warping{opacity:0;transform:scale(0.92)}
+.vignette{transition:opacity 0.4s ease}
+.vignette.warping{opacity:0}
+.footer{transition:opacity 0.4s ease}
+.footer.warping{opacity:0}
 
 .hero .logo{
   font-family:var(--ft);font-size:3rem;font-weight:900;
   background:linear-gradient(180deg,var(--g3),var(--gold),var(--g4));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   margin-bottom:12px;letter-spacing:0.12em;
+  text-shadow:0 0 80px rgba(212,184,122,0.3);
 }
 .hero .subtitle{
   font-family:var(--ft);font-size:1rem;color:var(--t2);
@@ -44,41 +62,80 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 }
 
 .portals{
-  display:flex;gap:24px;flex-wrap:wrap;justify-content:center;
-  max-width:900px;width:100%;
+  display:flex;gap:20px;flex-wrap:nowrap;justify-content:center;
+  max-width:1100px;width:100%;
+}
+/* Frosted glass blobs behind cards — give backdrop-filter something to blur */
+.portals::before{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(ellipse 300px 350px at 20% 55%, rgba(212,175,110,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 250px 300px at 75% 45%, rgba(176,143,255,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 200px 250px at 50% 60%, rgba(100,160,220,0.06) 0%, transparent 70%);
 }
 .portal{
-  flex:1;min-width:200px;max-width:240px;
-  padding:40px 28px;border-radius:24px;
-  background:rgba(18,22,40,0.65);backdrop-filter:blur(20px) saturate(140%);
-  -webkit-backdrop-filter:blur(20px) saturate(140%);
-  border:1px solid rgba(255,255,255,0.08);
-  box-shadow:0 8px 40px rgba(0,0,0,0.5),0 0 0 1px rgba(255,255,255,0.03) inset,0 1px 0 rgba(255,255,255,0.04) inset;
+  flex:1;min-width:150px;max-width:200px;
+  padding:32px 14px;border-radius:24px;
+  /* Frosted glass core */
+  background:rgba(18,22,40,0.28);
+  backdrop-filter:blur(14px) saturate(150%) brightness(1.05);
+  -webkit-backdrop-filter:blur(14px) saturate(150%) brightness(1.05);
+  /* Directional borders — light from top-left, glass edge highlight */
+  border-top:1px solid rgba(255,255,255,0.16);
+  border-left:1px solid rgba(255,255,255,0.12);
+  border-right:1px solid rgba(255,255,255,0.05);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  /* Multi-layer shadow for glass depth */
+  box-shadow:
+    0 20px 50px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(255,255,255,0.02) inset,
+    0 1px 0 rgba(255,255,255,0.05) inset;
   text-decoration:none;color:inherit;
   transition:transform 0.4s cubic-bezier(0.22,1,0.36,1),box-shadow 0.4s ease,border-color 0.4s ease;
   display:flex;flex-direction:column;align-items:center;gap:16px;
 }
 .portal:hover{
   transform:translateY(-10px);
-  border-color:rgba(255,255,255,0.15);
-  box-shadow:0 16px 56px rgba(0,0,0,0.55),0 0 0 1px rgba(255,255,255,0.06) inset,0 1px 0 rgba(255,255,255,0.08) inset,0 0 80px rgba(212,184,122,0.08);
+  border-top-color:rgba(255,255,255,0.28);
+  border-left-color:rgba(255,255,255,0.20);
+  border-right-color:rgba(255,255,255,0.10);
+  border-bottom-color:rgba(255,255,255,0.06);
+  box-shadow:
+    0 30px 60px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(255,255,255,0.05) inset,
+    0 1px 0 rgba(255,255,255,0.10) inset,
+    0 0 80px rgba(212,184,122,0.10);
 }
 .portal-icon{
   width:72px;height:72px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:2rem;border:1px solid rgba(255,255,255,0.1);
-  background:rgba(255,255,255,0.03);
+  font-size:2rem;
+  background:rgba(255,255,255,0.04);
+  border-top:1px solid rgba(255,255,255,0.14);
+  border-left:1px solid rgba(255,255,255,0.10);
+  border-right:1px solid rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.02);
+  box-shadow:0 8px 24px rgba(0,0,0,0.3),0 0 0 1px rgba(255,255,255,0.02) inset;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  transition:all 0.4s ease;
 }
-.portal.wish .portal-icon{background:radial-gradient(circle,rgba(212,184,122,0.15),transparent);border-color:rgba(212,184,122,0.3)}
-.portal.cards .portal-icon{background:radial-gradient(circle,rgba(176,143,255,0.12),transparent);border-color:rgba(176,143,255,0.25)}
-.portal.daily .portal-icon{background:radial-gradient(circle,rgba(255,180,100,0.12),transparent);border-color:rgba(255,180,100,0.25)}
-.portal.stats .portal-icon{background:radial-gradient(circle,rgba(130,200,230,0.12),transparent);border-color:rgba(130,200,230,0.25)}
+.portal:hover .portal-icon{
+  transform:translateY(-2px);
+  box-shadow:0 12px 32px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.05) inset;
+}
+.portal.wish .portal-icon{background:radial-gradient(circle,rgba(212,184,122,0.18),rgba(212,184,122,0.03));border-top-color:rgba(212,184,122,0.3);border-left-color:rgba(212,184,122,0.2)}
+.portal.cards .portal-icon{background:radial-gradient(circle,rgba(176,143,255,0.15),rgba(176,143,255,0.02));border-top-color:rgba(176,143,255,0.25);border-left-color:rgba(176,143,255,0.18)}
+.portal.daily .portal-icon{background:radial-gradient(circle,rgba(255,180,100,0.15),rgba(255,180,100,0.02));border-top-color:rgba(255,180,100,0.25);border-left-color:rgba(255,180,100,0.18)}
+.portal.stats .portal-icon{background:radial-gradient(circle,rgba(130,200,230,0.15),rgba(130,200,230,0.02));border-top-color:rgba(130,200,230,0.25);border-left-color:rgba(130,200,230,0.18)}
+.portal.guestbook .portal-icon{background:radial-gradient(circle,rgba(180,220,180,0.15),rgba(180,220,180,0.02));border-top-color:rgba(180,220,180,0.25);border-left-color:rgba(180,220,180,0.18)}
 
 .portal h2{font-family:var(--ft);font-size:1.4rem;font-weight:700}
 .portal.wish h2{background:linear-gradient(180deg,var(--g3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .portal.cards h2{background:linear-gradient(180deg,var(--p2),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .portal.daily h2{background:linear-gradient(180deg,#FFCC99,#FF9966);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .portal.stats h2{background:linear-gradient(180deg,#99DDFF,#55AADD);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.portal.guestbook h2{background:linear-gradient(180deg,#C8E8C8,#66AA88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 .portal p{font-size:0.85rem;color:var(--t2);line-height:1.6}
 
@@ -90,20 +147,102 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 
 .footer{
   position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
-  z-index:1;font-size:0.75rem;color:var(--t2);
+  z-index:2;font-size:0.75rem;color:var(--t2);
   letter-spacing:0.1em;
 }
+
+/* ===== Return button (visible when dimmed) ===== */
+.return-btn{
+  position:fixed;bottom:32px;right:32px;z-index:20;
+  width:46px;height:46px;border-radius:50%;
+  border:none;cursor:pointer;outline:none;
+  background:rgba(18,22,40,0.32);
+  backdrop-filter:blur(12px) saturate(150%);
+  -webkit-backdrop-filter:blur(12px) saturate(150%);
+  border-top:1px solid rgba(255,255,255,0.16);
+  border-left:1px solid rgba(255,255,255,0.10);
+  border-right:1px solid rgba(255,255,255,0.05);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:var(--gold);font-size:1.2rem;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 24px rgba(0,0,0,0.4);
+  opacity:0;pointer-events:none;
+  transition:opacity 0.4s ease,transform 0.3s ease;
+  transform:scale(0.8);
+}
+.return-btn.visible{
+  opacity:1;pointer-events:auto;transform:scale(1);
+}
+.return-btn:hover{
+  border-top-color:rgba(255,255,255,0.28);
+  background:rgba(212,184,122,0.12);
+  box-shadow:0 8px 30px rgba(0,0,0,0.5),0 0 20px rgba(212,184,122,0.12);
+}
+
+/* ===== Portal auto-fade: dim when mouse is away ===== */
+.hero .logo,.hero .subtitle,.hero .portals{
+  transition:opacity 0.8s ease; /* slow fade-out */
+}
+.hero.dimmed .logo{opacity:0.45}
+.hero.dimmed .subtitle{opacity:0.25}
+.hero.dimmed .portals{opacity:0.12;pointer-events:none}
+.hero.dimmed .portals:hover{opacity:0.12}
+
+/* ===== Guestbook modal ===== */
+.guestbook-overlay{
+  position:fixed;inset:0;z-index:50;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.3s ease;
+}
+.guestbook-overlay.open{opacity:1;pointer-events:auto}
+.guestbook-modal{
+  width:min(720px,90vw);max-height:70vh;
+  padding:28px 24px;border-radius:18px;
+  background:rgba(14,20,40,0.48);
+  backdrop-filter:blur(22px) saturate(150%) brightness(1.05);
+  -webkit-backdrop-filter:blur(22px) saturate(150%) brightness(1.05);
+  border-top:1px solid rgba(255,255,255,0.14);
+  border-left:1px solid rgba(255,255,255,0.10);
+  border-right:1px solid rgba(255,255,255,0.05);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  overflow-y:auto;position:relative;
+}
+.guestbook-modal::-webkit-scrollbar{width:3px}
+.guestbook-modal::-webkit-scrollbar-thumb{background:rgba(212,184,122,0.18);border-radius:2px}
+.guestbook-modal h3{
+  font-family:var(--ft);font-size:1.1rem;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:16px;text-align:center;letter-spacing:2px;
+}
+.guestbook-close{
+  position:absolute;top:12px;right:14px;
+  width:32px;height:32px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.04);
+  color:var(--t2);cursor:pointer;font-size:0.9rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+}
+.guestbook-close:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
 
 @media(max-width:600px){
   .hero .logo{font-size:2.2rem}
   .portals{gap:20px}
   .portal{padding:30px 20px}
+  .guestbook-modal{max-height:80vh;padding:20px 14px}
 }
 </style>
 </head>
 <body>
 
-<canvas id="starfield"></canvas>
+<canvas id="canvas"></canvas>
+<div class="vignette"></div>
 
 <main class="hero">
   <h1 class="logo">星 穹 祈 愿</h1>
@@ -134,175 +273,530 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
       <p>回顾祈愿历程，一览数据<br>收集进度与稀有度分布</p>
       <span class="portal-arrow">进入 →</span>
     </a>
+    <a class="portal guestbook" id="portal-guestbook" onclick="event.preventDefault();openGuestbook()">
+      <div class="portal-icon">💬</div>
+      <h2>留言板</h2>
+      <p>留下足迹，分享你的祈愿故事<br>与星穹旅人们一同交流</p>
+      <span class="portal-arrow">展开 ▽</span>
+    </a>
   </div>
 </main>
 
 <footer class="footer">© 2026 星穹祈愿 — Stellar Wish</footer>
 
+<!-- Dimmed-state return button -->
+<button class="return-btn" id="return-btn" title="回到入口">✦</button>
+
+<!-- ===== Guestbook modal ===== -->
+<div class="guestbook-overlay" id="guestbook-overlay">
+  <div class="guestbook-modal" id="guestbook-modal">
+    <button class="guestbook-close" id="guestbook-close">✕</button>
+    <h3>— 星穹留言 —</h3>
+    <div id="giscus-container"></div>
+  </div>
+</div>
+
 <script>
+function project3D(x,y,z,vars){
+	var p,d;
+	x-=vars.camX;
+	y-=vars.camY-8;
+	z-=vars.camZ;
+	p=Math.atan2(x,z);
+	d=Math.sqrt(x*x+z*z);
+	x=Math.sin(p-vars.yaw)*d;
+	z=Math.cos(p-vars.yaw)*d;
+	p=Math.atan2(y,z);
+	d=Math.sqrt(y*y+z*z);
+	y=Math.sin(p-vars.pitch)*d;
+	z=Math.cos(p-vars.pitch)*d;
+	var rx1=-1000;
+	var ry1=1;
+	var rx2=1000;
+	var ry2=1;
+	var rx3=0;
+	var ry3=0;
+	var rx4=x;
+	var ry4=z;
+	var uc=(ry4-ry3)*(rx2-rx1)-(rx4-rx3)*(ry2-ry1);
+	var ua=((rx4-rx3)*(ry1-ry3)-(ry4-ry3)*(rx1-rx3))/uc;
+	var ub=((rx2-rx1)*(ry1-ry3)-(ry2-ry1)*(rx1-rx3))/uc;
+	if(!z)z=0.000000001;
+	if(ua>0&&ua<1&&ub>0&&ub<1){
+		return {
+			x:vars.cx+(rx1+ua*(rx2-rx1))*vars.scale,
+			y:vars.cy+y/z*vars.scale,
+			d:(x*x+y*y+z*z)
+		};
+	}else{
+		return { d:-1 };
+	}
+}
+function elevation(x,y,z){
+	var dist = Math.sqrt(x*x+y*y+z*z);
+	if(dist && z/dist>=-1 && z/dist <=1) return Math.acos(z / dist);
+	return 0.00000001;
+}
+function rgb(col){
+	col += 0.000001;
+	var r = parseInt((0.5+Math.sin(col)*0.5)*16);
+	var g = parseInt((0.5+Math.cos(col)*0.5)*16);
+	var b = parseInt((0.5-Math.sin(col)*0.5)*16);
+	return "#"+r.toString(16)+g.toString(16)+b.toString(16);
+}
+function interpolateColors(RGB1,RGB2,degree){
+	var w2=degree;
+	var w1=1-w2;
+	return [w1*RGB1[0]+w2*RGB2[0],w1*RGB1[1]+w2*RGB2[1],w1*RGB1[2]+w2*RGB2[2]];
+}
+function rgbArray(col){
+	col += 0.000001;
+	var r = parseInt((0.5+Math.sin(col)*0.5)*256);
+	var g = parseInt((0.5+Math.cos(col)*0.5)*256);
+	var b = parseInt((0.5-Math.sin(col)*0.5)*256);
+	return [r, g, b];
+}
+function colorString(arr){
+	var r = parseInt(arr[0]);
+	var g = parseInt(arr[1]);
+	var b = parseInt(arr[2]);
+	return "#"+("0" + r.toString(16) ).slice (-2)+("0" + g.toString(16) ).slice (-2)+("0" + b.toString(16) ).slice (-2);
+}
+function process(vars){
+	if(vars.points.length<vars.initParticles) for(var i=0;i<5;++i) spawnParticle(vars);
+	var p,d,t;
+	p = Math.atan2(vars.camX, vars.camZ);
+	d = Math.sqrt(vars.camX * vars.camX + vars.camZ * vars.camZ);
+	d -= Math.sin(vars.frameNo / 80) / 25;
+	t = Math.cos(vars.frameNo / 300) / 165;
+	vars.camX = Math.sin(p + t) * d;
+	vars.camZ = Math.cos(p + t) * d;
+	vars.camY = -Math.sin(vars.frameNo / 220) * 15;
+	vars.yaw = Math.PI + p + t;
+	vars.pitch = elevation(vars.camX, vars.camZ, vars.camY) - Math.PI / 2;
+	var t;
+	for(var i=0;i<vars.points.length;++i){
+		x=vars.points[i].x;
+		y=vars.points[i].y;
+		z=vars.points[i].z;
+		d=Math.sqrt(x*x+z*z)/1.0075;
+		t=.1/(1+d*d/5);
+		p=Math.atan2(x,z)+t;
+		vars.points[i].x=Math.sin(p)*d;
+		vars.points[i].z=Math.cos(p)*d;
+		vars.points[i].y+=vars.points[i].vy*t*((Math.sqrt(vars.distributionRadius)-d)*2);
+		if(vars.points[i].y>vars.vortexHeight/2 || d<.25){
+			vars.points.splice(i,1);
+			spawnParticle(vars);
+		}
+	}
+}
+function drawFloor(vars){
+	var x,y,z,d,point,a;
+	for (var i = -25; i <= 25; i += 1) {
+		for (var j = -25; j <= 25; j += 1) {
+			x = i*2;
+			z = j*2;
+			y = vars.floor;
+			d = Math.sqrt(x * x + z * z);
+			point = project3D(x, y-d*d/85, z, vars);
+			if (point.d != -1) {
+				size = 1 + 15000 / (1 + point.d);
+				a = 0.15 - Math.pow(d / 50, 4) * 0.15;
+				if (a > 0) {
+					vars.ctx.fillStyle = colorString(interpolateColors(rgbArray(d/26-vars.frameNo/40),[0,128,32],.5+Math.sin(d/6-vars.frameNo/8)/2));
+					vars.ctx.globalAlpha = a;
+					vars.ctx.fillRect(point.x-size/2,point.y-size/2,size,size);
+				}
+			}
+		}
+	}
+	vars.ctx.fillStyle = "#82f";
+	for (var i = -25; i <= 25; i += 1) {
+		for (var j = -25; j <= 25; j += 1) {
+			x = i*2;
+			z = j*2;
+			y = -vars.floor;
+			d = Math.sqrt(x * x + z * z);
+			point = project3D(x, y+d*d/85, z, vars);
+			if (point.d != -1) {
+				size = 1 + 15000 / (1 + point.d);
+				a = 0.15 - Math.pow(d / 50, 4) * 0.15;
+				if (a > 0) {
+					vars.ctx.fillStyle = colorString(interpolateColors(rgbArray(-d/26-vars.frameNo/40),[32,0,128],.5+Math.sin(-d/6-vars.frameNo/8)/2));
+					vars.ctx.globalAlpha = a;
+					vars.ctx.fillRect(point.x-size/2,point.y-size/2,size,size);
+				}
+			}
+		}
+	}
+}
+function sortFunction(a,b){
+	return b.dist-a.dist;
+}
+function draw(vars){
+	vars.ctx.globalAlpha=.15;
+	vars.ctx.fillStyle="#000";
+	vars.ctx.fillRect(0, 0, canvas.width, canvas.height);
+	drawFloor(vars);
+	var point,x,y,z,a;
+	for(var i=0;i<vars.points.length;++i){
+		x=vars.points[i].x;
+		y=vars.points[i].y;
+		z=vars.points[i].z;
+		point=project3D(x,y,z,vars);
+		if(point.d != -1){
+			vars.points[i].dist=point.d;
+			size=1+vars.points[i].radius/(1+point.d);
+			d=Math.abs(vars.points[i].y);
+			a = .8 - Math.pow(d / (vars.vortexHeight/2), 1000) * .8;
+			vars.ctx.globalAlpha=a>=0&&a<=1?a:0;
+			vars.ctx.fillStyle=rgb(vars.points[i].color);
+			if(point.x>-1&&point.x<vars.canvas.width&&point.y>-1&&point.y<vars.canvas.height)vars.ctx.fillRect(point.x-size/2,point.y-size/2,size,size);
+		}
+	}
+	vars.points.sort(sortFunction);
+}
+function spawnParticle(vars){
+
+	var p,ls;
+	pt={};
+	p=Math.PI*2*Math.random();
+	ls=Math.sqrt(Math.random()*vars.distributionRadius);
+	pt.x=Math.sin(p)*ls;
+	pt.y=-vars.vortexHeight/2;
+	pt.vy=vars.initV/20+Math.random()*vars.initV;
+	pt.z=Math.cos(p)*ls;
+	pt.radius=200+800*Math.random();
+	pt.color=pt.radius/1000+vars.frameNo/250;
+	vars.points.push(pt);
+}
+function frame(vars) {
+	if(vars === undefined){
+		var vars={};
+		vars.canvas = document.querySelector("canvas");
+		vars.ctx = vars.canvas.getContext("2d");
+		vars.canvas.width = document.body.clientWidth;
+		vars.canvas.height = document.body.clientHeight;
+		window.addEventListener("resize", function(){
+			vars.canvas.width = document.body.clientWidth;
+			vars.canvas.height = document.body.clientHeight;
+			vars.cx=vars.canvas.width/2;
+			vars.cy=vars.canvas.height/2;
+		}, true);
+		vars.frameNo=0;
+
+		vars.camX = 0;
+		vars.camY = 0;
+		vars.camZ = -14;
+		vars.pitch = elevation(vars.camX, vars.camZ, vars.camY) - Math.PI / 2;
+		vars.yaw = 0;
+		vars.cx=vars.canvas.width/2;
+		vars.cy=vars.canvas.height/2;
+		vars.bounding=10;
+		vars.scale=500;
+		vars.floor=26.5;
+
+		vars.points=[];
+		vars.initParticles=700;
+		vars.initV=.01;
+		vars.distributionRadius=800;
+		vars.vortexHeight=25;
+	}
+	vars.frameNo++;
+	requestAnimationFrame(function() {
+		frame(vars);
+	});
+	process(vars);
+	draw(vars);
+}
+frame();
+</script>
+
+<script>
+/* ==============================================
+   Hyperspace Warp Transition (Star Wars style)
+   ============================================== */
 (function(){
-  const c=document.getElementById('starfield');
-  const ctx=c.getContext('2d');
-  let w,h,stars=[],meteors=[];
+  var warpActive = false;
 
-  function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
-  resize();window.addEventListener('resize',resize);
-
-  for(let i=0;i<200;i++){
-    stars.push({
-      x:Math.random()*w,y:Math.random()*h,
-      r:Math.random()*1.6+0.3,
-      a:Math.random()*0.7+0.15,
-      s:Math.random()*0.003+0.001,
-      phase:Math.random()*Math.PI*2
+  // Intercept all portal clicks
+  document.querySelectorAll('.portal').forEach(function(link){
+    link.addEventListener('click', function(e){
+      e.preventDefault();
+      if(warpActive) return;
+      var href = this.getAttribute('href');
+      if(href) startWarp(href);
     });
-  }
+  });
 
-  function spawnMeteor(){
-    // Random edge: 0=top, 1=right, 2=bottom, 3=left
-    const edge=Math.floor(Math.random()*4);
-    let x,y,angle;
-    if(edge===0){// top — shooting down-right or down-left
-      x=Math.random()*w;y=-20;
-      angle=-35+Math.random()*40; // -35° to +5°
-    }else if(edge===1){// right — shooting left-down
-      x=w+20;y=Math.random()*h*0.7;
-      angle=160+Math.random()*35; // 160° to 195° (right-to-left, down)
-    }else if(edge===2){// bottom — shooting up (rarer, more dramatic)
-      x=Math.random()*w;y=h+20;
-      angle=-160+Math.random()*30; // shoot up-left or up-right
-    }else{// left — shooting right-down
-      x=-20;y=Math.random()*h*0.7;
-      angle=-10+Math.random()*35; // -10° to 25° (left-to-right, down)
-    }
-    const rad=angle*Math.PI/180;
-    const speed=18+Math.random()*28;
-    const hue=Math.random()<0.08?270:Math.random()<0.25?34:48;
-    return {
-      x,y,
-      vx:Math.cos(rad)*speed,
-      vy:-Math.sin(rad)*speed,
-      hue:hue,
-      life:1,decay:0.0025+Math.random()*0.0045,
-      trail:[],trailMax:40+Math.floor(Math.random()*30)
-    };
-  }
+  function startWarp(targetUrl){
+    warpActive = true;
 
-  // Start with 8 active meteors across the screen
-  for(let i=0;i<8;i++){
-    const m=spawnMeteor();
-    m.life=0.15+Math.random()*0.85;
-    // Randomize starting positions along their paths
-    m.x-=m.vx*Math.random()*60;
-    m.y-=m.vy*Math.random()*60;
-    meteors.push(m);
-  }
+    // Fade out UI layers
+    document.querySelector('.hero').classList.add('warping');
+    document.querySelector('.vignette').classList.add('warping');
+    document.querySelector('.footer').classList.add('warping');
 
-  let spawnTimer=0;
+    // Create warp canvas on top of everything
+    var warp = document.createElement('canvas');
+    warp.style.cssText = 'position:fixed;inset:0;z-index:100;pointer-events:none';
+    document.body.appendChild(warp);
+    warp.width = window.innerWidth;
+    warp.height = window.innerHeight;
+    var ctx = warp.getContext('2d');
 
-  function draw(ts,dt){
-    const dts=Math.min(dt,0.1);
-    ctx.clearRect(0,0,w,h);
+    var cx = warp.width / 2;
+    var cy = warp.height / 2;
 
-    // ── Static stars ──
-    const now=Date.now()*0.001;
-    stars.forEach(s=>{
-      s.x+=s.s;
-      if(s.x>w+5){s.x=-5;s.y=Math.random()*h}
-      const alpha=s.a+Math.sin(now+s.phase)*0.2;
-      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(212,184,122,${Math.max(0,alpha)})`;
-      ctx.fill();
-    });
-
-    // ── Spawn: very dense — 2~5 meteors per frame at times ──
-    spawnTimer+=dts;
-    const count=Math.random()<0.25?2:1; // 25% chance of double spawn
-    for(let k=0;k<count;k++){
-      if(spawnTimer>0.06+Math.random()*0.22){
-        spawnTimer=0;
-        meteors.push(spawnMeteor());
-      }
+    // Hyperspace streaks — spawn from edges, race toward center
+    var streaks = [];
+    var STREAK_COUNT = 400;
+    for (var i = 0; i < STREAK_COUNT; i++){
+      streaks.push(spawnStreak(cx, cy, warp.width, warp.height, true));
     }
 
-    // ── Use additive blending for intense glow ──
-    ctx.globalCompositeOperation='lighter';
+    var startTime = performance.now();
+    var DURATION = 1800; // ms
 
-    for(let i=meteors.length-1;i>=0;i--){
-      const m=meteors[i];
-      m.x+=m.vx*dts*60;
-      m.y+=m.vy*dts*60;
-      m.life-=m.decay*dts*60;
+    function spawnStreak(cx, cy, w, h, randomDist){
+      // Spawn from far outside the viewport on a random edge
+      var edge = Math.floor(Math.random() * 4);
+      var x, y;
+      var margin = 300;
+      if(edge === 0){ x = Math.random() * w; y = -margin; }          // top
+      else if(edge === 1){ x = w + margin; y = Math.random() * h; }   // right
+      else if(edge === 2){ x = Math.random() * w; y = h + margin; }   // bottom
+      else { x = -margin; y = Math.random() * h; }                     // left
 
-      m.trail.push({x:m.x,y:m.y});
-      if(m.trail.length>m.trailMax)m.trail.shift();
-
-      if(m.life<=0||m.y>h+150||m.x<-150||m.x>w+150){
-        meteors.splice(i,1);continue;
+      if(randomDist){
+        // Randomize initial position along the path
+        x += (cx - x) * (Math.random() * 0.8);
+        y += (cy - y) * (Math.random() * 0.8);
       }
 
-      // ── Trail: bright, tapered ──
-      if(m.trail.length>1){
-        for(let j=1;j<m.trail.length;j++){
-          const t=j/m.trail.length;
-          const alpha=t*t*m.life*0.9;
-          const lw=t*7+0.5;
-          // Wide glow layer
-          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
-          ctx.strokeStyle=`hsla(${m.hue},100%,85%,${alpha*0.25})`;
-          ctx.lineWidth=lw+16;ctx.lineCap='round';ctx.stroke();
-          // Mid layer
-          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
-          ctx.strokeStyle=`hsla(${m.hue},100%,95%,${alpha*0.5})`;
-          ctx.lineWidth=lw+6;ctx.lineCap='round';ctx.stroke();
-          // Core
-          ctx.beginPath();ctx.moveTo(m.trail[j-1].x,m.trail[j-1].y);ctx.lineTo(m.trail[j].x,m.trail[j].y);
-          ctx.strokeStyle=`hsla(0,0%,100%,${alpha})`;
-          ctx.lineWidth=lw;ctx.lineCap='round';ctx.stroke();
+      // Slight randomization of target (vanishing point)
+      var tx = cx + (Math.random() - 0.5) * 80;
+      var ty = cy + (Math.random() - 0.5) * 60;
+
+      var dx = tx - x;
+      var dy = ty - y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+
+      return {
+        x: x, y: y,
+        tx: tx, ty: ty,
+        nx: dx / dist, ny: dy / dist,
+        dist: dist,
+        speed: 4 + Math.random() * 12,
+        length: 30 + Math.random() * 120,
+        hue: Math.random() < 0.2 ? 40 : Math.random() < 0.5 ? 210 : 260,
+        opacity: 0.5 + Math.random() * 0.5
+      };
+    }
+
+    function animateWarp(ts){
+      var elapsed = ts - startTime;
+      var progress = Math.min(elapsed / DURATION, 1);
+      // Aggressive ease-in: slow start → explosive finish
+      var eased = Math.pow(progress, 4);
+
+      // Fade-to-black overlay intensifies
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = 'rgba(0,0,0,' + (0.08 + eased * 0.35) + ')';
+      ctx.fillRect(0, 0, warp.width, warp.height);
+
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (var i = 0; i < streaks.length; i++){
+        var s = streaks[i];
+        var currentSpeed = s.speed * (1 + eased * 40);
+        s.x += s.nx * currentSpeed;
+        s.y += s.ny * currentSpeed;
+
+        var remainingDist = Math.sqrt(
+          (s.tx - s.x) * (s.tx - s.x) + (s.ty - s.y) * (s.ty - s.y)
+        );
+
+        // Streak tail position
+        var tailLen = s.length * (1 + eased * 8);
+        var sx = s.x - s.nx * tailLen;
+        var sy = s.y - s.ny * tailLen;
+
+        var alpha = s.opacity * (1 - progress * 0.3);
+
+        // Wide coloured glow
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(s.x, s.y);
+        ctx.strokeStyle = 'hsla(' + s.hue + ',100%,80%,' + (alpha * 0.25) + ')';
+        ctx.lineWidth = 4 + eased * 8;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Mid glow
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(s.x, s.y);
+        ctx.strokeStyle = 'hsla(' + s.hue + ',100%,95%,' + (alpha * 0.55) + ')';
+        ctx.lineWidth = 1.5 + eased * 3;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // White-hot core
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(s.x, s.y);
+        ctx.strokeStyle = 'hsla(0,0%,100%,' + alpha + ')';
+        ctx.lineWidth = 0.8 + eased * 1.2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Respawn if past vanishing point or too close
+        if(remainingDist < 20 || s.x < -500 || s.x > warp.width + 500 || s.y < -500 || s.y > warp.height + 500){
+          streaks[i] = spawnStreak(cx, cy, warp.width, warp.height, false);
         }
       }
 
-      // ── Head glow ──
-      const a=m.life;
-      // Outer halo — massive
-      const g3=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,60);
-      g3.addColorStop(0,`hsla(${m.hue},100%,90%,${a*0.55})`);
-      g3.addColorStop(0.25,`hsla(${m.hue},100%,80%,${a*0.25})`);
-      g3.addColorStop(0.6,`hsla(${m.hue},100%,65%,${a*0.06})`);
-      g3.addColorStop(1,`hsla(${m.hue},100%,50%,0)`);
-      ctx.beginPath();ctx.arc(m.x,m.y,60,0,Math.PI*2);
-      ctx.fillStyle=g3;ctx.fill();
+      // Central glow builds from 30% progress
+      if(progress > 0.3){
+        var glowAlpha = Math.pow((progress - 0.3) / 0.7, 2);
+        var glowRadius = 80 + eased * 500;
+        var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowRadius);
+        g.addColorStop(0, 'rgba(255,255,255,' + (glowAlpha * 0.9) + ')');
+        g.addColorStop(0.2, 'rgba(180,210,255,' + (glowAlpha * 0.5) + ')');
+        g.addColorStop(0.5, 'rgba(80,120,255,' + (glowAlpha * 0.15) + ')');
+        g.addColorStop(1, 'rgba(20,40,180,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-      // Mid glow
-      const g2=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,22);
-      g2.addColorStop(0,`hsla(${m.hue},100%,98%,${a*0.9})`);
-      g2.addColorStop(0.35,`hsla(${m.hue},100%,85%,${a*0.5})`);
-      g2.addColorStop(0.7,`hsla(${m.hue},100%,70%,${a*0.12})`);
-      g2.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
-      ctx.beginPath();ctx.arc(m.x,m.y,22,0,Math.PI*2);
-      ctx.fillStyle=g2;ctx.fill();
-
-      // White-hot core — larger
-      const g1=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,9);
-      g1.addColorStop(0,'rgba(255,255,255,1)');
-      g1.addColorStop(0.1,`hsla(${m.hue},100%,98%,1)`);
-      g1.addColorStop(0.4,`hsla(${m.hue},100%,85%,0.5)`);
-      g1.addColorStop(1,`hsla(${m.hue},100%,60%,0)`);
-      ctx.beginPath();ctx.arc(m.x,m.y,9,0,Math.PI*2);
-      ctx.fillStyle=g1;ctx.fill();
+      if(progress < 1){
+        requestAnimationFrame(animateWarp);
+      }else{
+        // Terminal flash
+        ctx.globalCompositeOperation = 'source-over';
+        var flashAlpha = 1;
+        function flashOut(){
+          flashAlpha -= 0.06;
+          if(flashAlpha <= 0){
+            window.location.href = targetUrl;
+            return;
+          }
+          ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0, flashAlpha) + ')';
+          ctx.fillRect(0, 0, warp.width, warp.height);
+          requestAnimationFrame(flashOut);
+        }
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, warp.width, warp.height);
+        requestAnimationFrame(flashOut);
+      }
     }
 
-    ctx.globalCompositeOperation='source-over';
+    requestAnimationFrame(animateWarp);
+  }
+})();
+</script>
+
+<script>
+/* ==============================================
+   Portal auto-fade + Guestbook toggle
+   ============================================== */
+(function(){
+  var hero = document.querySelector('.hero');
+  var returnBtn = document.getElementById('return-btn');
+  var gbOverlay = document.getElementById('guestbook-overlay');
+  var gbClose = document.getElementById('guestbook-close');
+  var giscusLoaded = false;
+
+  // ---- Portal fade ----
+  var dimTimer = null;
+  var DIM_DELAY = 1800;
+
+  function undim(){
+    // Force instant reappear via inline style, then clear for next fade-out
+    var els = hero.querySelectorAll('.logo,.subtitle,.portals');
+    els.forEach(function(el){ el.style.transition = 'none'; });
+    hero.classList.remove('dimmed');
+    returnBtn.classList.remove('visible');
+    // Trigger reflow so the 'none' transition takes effect immediately
+    hero.offsetHeight;
+    // Restore CSS transition for next fade-out
+    els.forEach(function(el){ el.style.transition = ''; });
+    resetTimer();
   }
 
-  let lastTime=0;
-  function loop(ts){
-    const dt=lastTime?(ts-lastTime)/1000:0.016;
-    lastTime=ts;
-    draw(ts,dt);
-    requestAnimationFrame(loop);
+  function doDim(){
+    hero.classList.add('dimmed');
+    returnBtn.classList.add('visible');
   }
-  requestAnimationFrame(loop);
+
+  function resetTimer(){
+    clearTimeout(dimTimer);
+    dimTimer = setTimeout(doDim, DIM_DELAY);
+  }
+
+  // Mouse enters hero area — immediately show
+  hero.addEventListener('mouseenter', undim);
+  // Mouse moves anywhere on the page — reset the fade countdown
+  document.addEventListener('mousemove', function(e){
+    if(hero.contains(e.target) || returnBtn.contains(e.target)){
+      undim();
+    }else{
+      resetTimer();
+    }
+  });
+  // Return button click — manually undim
+  returnBtn.addEventListener('click', undim);
+  // Start the timer on page load
+  resetTimer();
+
+  // ---- Guestbook modal ----
+  window.openGuestbook = function(){
+    gbOverlay.classList.add('open');
+    if(!giscusLoaded) loadGiscus();
+  };
+  gbClose.addEventListener('click', function(){
+    gbOverlay.classList.remove('open');
+  });
+  gbOverlay.addEventListener('click', function(e){
+    if(e.target === gbOverlay) gbOverlay.classList.remove('open');
+  });
+
+  function loadGiscus(){
+    giscusLoaded = true;
+    var container = document.getElementById('giscus-container');
+    // Show loading hint
+    container.innerHTML = '<p style="text-align:center;color:var(--t2);font-size:0.85rem;padding:20px">正在加载留言系统...</p>';
+
+    var script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    script.setAttribute('data-repo', 'csxuyi/CSXUYI.github.io');
+    script.setAttribute('data-repo-id', 'R_kgDOSl85kg');
+    script.setAttribute('data-category', 'General');
+    script.setAttribute('data-category-id', 'DIC_kwDOSl85ks4C99iu');
+    script.setAttribute('data-mapping', 'pathname');
+    script.setAttribute('data-strict', '0');
+    script.setAttribute('data-reactions-enabled', '1');
+    script.setAttribute('data-emit-metadata', '0');
+    script.setAttribute('data-input-position', 'bottom');
+    script.setAttribute('data-theme', 'dark');
+    script.setAttribute('data-lang', 'zh-CN');
+    script.setAttribute('data-loading', 'lazy');
+    script.crossOrigin = 'anonymous';
+    script.async = true;
+
+    script.onload = function(){
+      // giscus will replace the container content
+    };
+    script.onerror = function(){
+      container.innerHTML = '<p style="text-align:center;color:var(--t2);font-size:0.85rem;padding:20px">留言系统加载失败。请确认已在 GitHub 仓库中启用 Discussions 功能，并到 <a href="https://giscus.app" style="color:var(--gold)" target="_blank">giscus.app</a> 完成配置。</p>';
+    };
+
+    container.appendChild(script);
+  }
 })();
 </script>
 
