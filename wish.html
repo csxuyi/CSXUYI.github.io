@@ -3317,6 +3317,11 @@ function buildCards(rs,n){
         <div class="card-face card-back">
           ${glints}
           <div class="card-back-emblem"><span class="card-back-star">✦</span></div>
+          <div class="dupe-overlay">
+            <div class="dupe-stardust-icon">✨</div>
+            <div class="dupe-stardust-amount">+${sdAmt}</div>
+            <div class="dupe-stardust-label">星 辉</div>
+          </div>
         </div>
         <div class="card-face card-front ${s.cl}">
           <span class="card-rarity-badge">${s.l}</span>
@@ -3325,11 +3330,6 @@ function buildCards(rs,n){
             <div class="card-name">${r.card.name}</div>
             <div class="card-stars">${'★'.repeat(r.rarity)}</div>
             <div class="card-desc">${r.card.desc||''}</div>
-          </div>
-          <div class="dupe-overlay">
-            <div class="dupe-stardust-icon">✨</div>
-            <div class="dupe-stardust-amount">+${sdAmt}</div>
-            <div class="dupe-stardust-label">星 辉</div>
           </div>
         </div>
       </div>
@@ -3409,23 +3409,22 @@ function flipAll(rs){
       }
     },i*350);
   });
-  // After all flipped, show stardust on duplicate cards
-  const dupes=window._lastDupes||[];
+  // After all flipped, flip dupe cards back to show stardust on back face
   const dupeCards=cardDeck.querySelectorAll('.dupe-card');
   if(dupeCards.length>0){
-    const dupeDelay=cards.length*350+400;
+    const dupeDelay=cards.length*350+500;
     ad(()=>{
-      dupeCards.forEach(el=>{
-        var ov=el.querySelector('.dupe-overlay');
-        if(ov)ov.classList.add('show');
-        // flip back to show stardust
-        el.classList.remove('flipped');
-        setTimeout(()=>{el.classList.add('dupe-flip')},100);
+      dupeCards.forEach((el,i)=>{
+        setTimeout(()=>{
+          el.classList.remove('flipped'); // flip back
+          var ov=el.querySelector('.dupe-overlay');
+          if(ov)ov.classList.add('show'); // reveal stardust
+        },i*180);
       });
     },dupeDelay);
   }
   // Show controls after all
-  const totalDur=cards.length*350+(dupeCards.length>0?1200:800);
+  const totalDur=cards.length*350+(dupeCards.length>0?1400:800);
   ad(()=>{
     if(!skipReq)resCtl.classList.add('show');
     drawing=false;setBtns(false);save();
@@ -3501,11 +3500,16 @@ function doDraw(n){
       S.p6[bi]=0;
     }
   }
-  // Duplicate detection: check against pre-existing history
-  const prevNames=new Set();S.hist.forEach(h=>{if(h&&h.card&&h.card.name)prevNames.add(h.card.name)});
+  // Duplicate detection within current batch only
+  const nameCount=new Map();
+  for(const r of rs){const n=r.card.name;nameCount.set(n,(nameCount.get(n)||0)+1)}
   const dupes=[];let addedStardust=0;
+  const seen=new Map();
   for(const r of rs){
-    const isDupe=prevNames.has(r.card.name);
+    const name=r.card.name;
+    const seenCount=seen.get(name)||0;
+    const isDupe=seenCount>0; // first occurrence is NOT dupe, subsequent ones ARE
+    seen.set(name,seenCount+1);
     dupes.push(isDupe);
     if(isDupe){
       const sdAmt=r.rarity===6?1500:r.rarity===5?720:r.rarity===4?120:15;
