@@ -679,6 +679,16 @@ function doSign() {
   state.totalEarned += reward.amount;
   creditReward(reward);
 
+  // 7-day streak bonus: extra stardust + fates
+  if(state.streak === 7){
+    try{
+      var wd=JSON.parse(localStorage.getItem('wish_genshin_v5')||'{}');
+      wd.sd=(wd.sd||0)+50;
+      localStorage.setItem('wish_genshin_v5',JSON.stringify(wd));
+      creditReward({name:'满签奖励',amount:3,key:'bonus7',icon:'🌟'});
+    }catch(e){}
+  }
+
   // Show toast
   const overlay = document.getElementById('reward-overlay');
   document.getElementById('rt-icon').textContent = state.streak === 7 ? '🌟' : reward.icon;

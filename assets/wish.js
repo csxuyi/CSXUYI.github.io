@@ -969,10 +969,12 @@ function selectAnswer(idx){
     Q('#quiz-score').textContent='得分: '+quizState.score;
     fb.textContent='✓ 正确！+10 抽';
     fb.className='quiz-feedback correct-fb';
+    try{playTone(880,0.1,'sine',0.06);setTimeout(function(){playTone(1100,0.1,'sine',0.06)},100);setTimeout(function(){playTone(1320,0.15,'sine',0.06)},200)}catch(e){}
   }else{
     opts[idx].classList.add('wrong');
     fb.textContent='✗ 错误。正确答案是 '+['A','B','C','D'][correct];
     fb.className='quiz-feedback wrong-fb';
+    try{playTone(200,0.3,'triangle',0.06)}catch(e){}
   }
   // Disable all options
   opts.forEach(function(o){o.disabled=true});
@@ -1077,6 +1079,7 @@ window.buyShopItem=function(id){
   updateStardust();
   renderShopItems();
   save();
+  try{playTone(660,0.1,'sine',0.06);setTimeout(function(){playTone(880,0.15,'sine',0.06)},100)}catch(e){}
   showToast('兑换成功！获得 '+item.name);
 };
 
