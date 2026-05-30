@@ -1737,6 +1737,98 @@ body{
   .quiz-q-text{font-size:0.9rem}
   .quiz-opt{font-size:0.78rem;padding:11px 14px}
 }
+
+/* ===== STARDUST SHOP ===== */
+#shop-overlay{
+  position:fixed;inset:0;z-index:210;
+  background:rgba(2,2,10,0.85);
+  backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+#shop-overlay.open{opacity:1;pointer-events:auto}
+.shop-panel{
+  width:min(440px,92vw);max-height:80vh;overflow-y:auto;
+  border-radius:20px;
+  background:rgba(18,22,46,0.42);
+  backdrop-filter:blur(16px) saturate(140%);
+  border-top:1px solid rgba(255,255,255,0.12);
+  border-left:1px solid rgba(255,255,255,0.08);
+  border-right:1px solid rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.02);
+  box-shadow:0 20px 50px rgba(0,0,0,0.5);
+}
+.shop-panel::-webkit-scrollbar{width:3px}
+.shop-panel::-webkit-scrollbar-thumb{background:rgba(212,184,122,0.2);border-radius:2px}
+.shop-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.shop-hdr h3{
+  font-family:var(--ft);font-size:1rem;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:1px;
+}
+.shop-close{
+  width:30px;height:30px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);
+  color:var(--t2);cursor:pointer;font-size:0.9rem;
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+.shop-close:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
+.shop-body{padding:16px 20px 20px}
+.shop-balance{
+  text-align:center;font-size:0.9rem;color:var(--t2);margin-bottom:16px;
+  font-family:var(--fu);
+}
+.shop-balance b{color:var(--g3);font-size:1.3rem}
+.shop-items{display:flex;flex-direction:column;gap:8px}
+.shop-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:12px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.06);
+  transition:all 0.25s;
+}
+.shop-item:hover{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12)}
+.shop-item-icon{
+  width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+}
+.shop-item-info{flex:1}
+.shop-item-name{font-size:0.82rem;color:var(--text)}
+.shop-item-desc{font-size:0.65rem;color:var(--t3);margin-top:2px}
+.shop-item-price{font-size:0.75rem;color:var(--gold);white-space:nowrap}
+.shop-item-btn{
+  padding:6px 14px;border-radius:8px;font-size:0.7rem;
+  background:rgba(212,184,122,0.08);
+  border:1px solid rgba(212,184,122,0.25);
+  color:var(--gold);cursor:pointer;white-space:nowrap;
+  font-family:var(--fu);transition:all 0.25s;
+}
+.shop-item-btn:hover{background:rgba(212,184,122,0.16);border-color:rgba(212,184,122,0.4)}
+.shop-item-btn:disabled{opacity:0.3;cursor:not-allowed}
+.shop-note{
+  margin-top:14px;font-size:0.62rem;color:var(--t3);
+  text-align:center;line-height:1.5;
+}
+
+/* Duplicate card flip — stardust reveal on back */
+.card-3d.dupe-flip .card-3d-inner{transform:rotateY(360deg)!important;transition:transform 0.8s cubic-bezier(0.4,0.1,0.2,1)}
+.dupe-overlay{
+  position:absolute;inset:0;z-index:5;border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 50%,rgba(20,15,40,0.85),rgba(5,3,15,0.95));
+  pointer-events:none;opacity:0;transition:opacity 0.5s ease;
+}
+.dupe-overlay.show{opacity:1}
+.dupe-stardust-icon{font-size:2rem;margin-bottom:6px}
+.dupe-stardust-amount{font-family:var(--ft);font-size:1.2rem;color:var(--g3);font-weight:700}
+.dupe-stardust-label{font-family:"JetBrains Mono",monospace;font-size:0.6rem;color:var(--t2);letter-spacing:0.1em;margin-top:2px}
 </style>
 <style>
 /* ============ wish.html · GEEK ENHANCEMENT LAYER ============ */
@@ -2598,12 +2690,17 @@ if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){l
         <span class="pp-sep">·</span>
         <div class="pp-block"><span class="pp-label">6★</span><span class="pp-num s6" id="tp-6-rem">300</span></div>
       </div>
+      <div class="res-card" id="stardust-card">
+        <div class="res-icon" style="background:radial-gradient(circle at 40% 40%,#ffd080,#8a5a20);box-shadow:0 0 6px rgba(212,184,122,0.5)"></div>
+        <span class="res-num" id="stardust-num">0</span>
+        <span class="res-label">星辉</span>
+      </div>
       <div class="res-card">
         <div class="res-icon"></div>
         <span class="res-num" id="fate-num">25</span>
         <span class="res-label" id="fate-label">纠缠之缘</span>
       </div>
-      <button class="btn-exchange">星辉兑换</button>
+      <button class="btn-exchange" id="btn-exchange">星辉兑换</button>
       <button class="icon-minigame" id="btn-minigame" title="锤子游戏">🔨</button>
       <button class="icon-mute" id="btn-mute" title="音效">🔊</button>
     </div>
@@ -2759,6 +2856,23 @@ if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){l
   </div>
 </div>
 
+<!-- Stardust Shop overlay -->
+<div id="shop-overlay">
+  <div class="shop-panel" id="shop-panel">
+    <div class="shop-hdr">
+      <h3>— 星辉兑换 —</h3>
+      <button class="shop-close" id="shop-close">✕</button>
+    </div>
+    <div class="shop-body">
+      <div class="shop-balance">当前星辉：<b id="shop-balance-num">0</b></div>
+      <div class="shop-items" id="shop-items">
+        <!-- Filled by JS -->
+      </div>
+      <p class="shop-note">※ 抽取重复角色自动获得星辉：3★=15 / 4★=120 / 5★=720 / 6★=1500</p>
+    </div>
+  </div>
+</div>
+
 <!-- ▼ FULLSCREEN WISH ANIMATION STAGE -->
 <div id="wish-stage">
   <!-- Stargate -->
@@ -2857,7 +2971,7 @@ const BN=[
 ];
 
 /* State */
-let S={bn:0,total:0,p5:[0,0,0],p4:[0,0,0],p6:[0,0,0],guar:[false,false,false],hist:[],muted:false};
+let S={bn:0,total:0,p5:[0,0,0],p4:[0,0,0],p6:[0,0,0],guar:[false,false,false],hist:[],muted:false,stardust:0};
 /* Session-only counter (本次会话抽数) */
 S.sess=0;
 
@@ -3183,11 +3297,14 @@ function runWishAnimation(rs,n){
 
 function buildCards(rs,n){
   cardDeck.innerHTML='';
+  var dupes=window._lastDupes||[];
   rs.forEach((r,i)=>{
-    const s=ST[r.rarity];
-    const el=document.createElement('div');
-    el.className='card-3d '+s.cl+'-card';
-    const imgHTML=r.card.img?
+    var s=ST[r.rarity];
+    var isDupe=dupes[i]||false;
+    var sdAmt=r.rarity===6?1500:r.rarity===5?720:r.rarity===4?120:15;
+    var el=document.createElement('div');
+    el.className='card-3d '+s.cl+'-card'+(isDupe?' dupe-card':'');
+    var imgHTML=r.card.img?
       `<img src="${r.card.img}" alt="${r.card.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="card-img-fallback" style="display:none">${'★'.repeat(r.rarity)}</span>`:
       `<span class="card-img-fallback">${'★'.repeat(r.rarity)}</span>`;
     // Random glints positions for back
@@ -3208,6 +3325,11 @@ function buildCards(rs,n){
             <div class="card-name">${r.card.name}</div>
             <div class="card-stars">${'★'.repeat(r.rarity)}</div>
             <div class="card-desc">${r.card.desc||''}</div>
+          </div>
+          <div class="dupe-overlay">
+            <div class="dupe-stardust-icon">✨</div>
+            <div class="dupe-stardust-amount">+${sdAmt}</div>
+            <div class="dupe-stardust-label">星 辉</div>
           </div>
         </div>
       </div>
@@ -3287,8 +3409,23 @@ function flipAll(rs){
       }
     },i*350);
   });
-  // Show controls after all flipped
-  const totalDur=cards.length*350+800;
+  // After all flipped, show stardust on duplicate cards
+  const dupes=window._lastDupes||[];
+  const dupeCards=cardDeck.querySelectorAll('.dupe-card');
+  if(dupeCards.length>0){
+    const dupeDelay=cards.length*350+400;
+    ad(()=>{
+      dupeCards.forEach(el=>{
+        var ov=el.querySelector('.dupe-overlay');
+        if(ov)ov.classList.add('show');
+        // flip back to show stardust
+        el.classList.remove('flipped');
+        setTimeout(()=>{el.classList.add('dupe-flip')},100);
+      });
+    },dupeDelay);
+  }
+  // Show controls after all
+  const totalDur=cards.length*350+(dupeCards.length>0?1200:800);
   ad(()=>{
     if(!skipReq)resCtl.classList.add('show');
     drawing=false;setBtns(false);save();
@@ -3364,13 +3501,27 @@ function doDraw(n){
       S.p6[bi]=0;
     }
   }
+  // Duplicate detection: check against pre-existing history
+  const prevNames=new Set();S.hist.forEach(h=>prevNames.add(h.card.name));
+  const dupes=[];let addedStardust=0;
+  for(const r of rs){
+    const isDupe=prevNames.has(r.card.name);
+    dupes.push(isDupe);
+    if(isDupe){
+      const sdAmt=r.rarity===6?1500:r.rarity===5?720:r.rarity===4?120:15;
+      addedStardust+=sdAmt;
+    }
+  }
+  S.stardust=(S.stardust||0)+addedStardust;
   for(const r of rs)S.hist.unshift({card:r.card,rarity:r.rarity,t:Date.now(),bn:S.bn});
   if(S.hist.length>500)S.hist.length=500;
   // Deduct
   fc.textContent=v-n;
   fc.classList.remove('bump');void fc.offsetWidth;fc.classList.add('bump');
+  updateStardust();
   updatePity();
   window._lastRs=rs;window._lastN=n;
+  window._lastDupes=dupes;window._lastAddedStardust=addedStardust;
   runWishAnimation(rs,rs.length);
 }
 
@@ -3772,6 +3923,66 @@ Q('#quiz-close').addEventListener('click',closeQuiz);
 window.openQuiz=openQuiz;window.closeQuiz=closeQuiz;
 window.selectAnswer=selectAnswer;window.nextQuestion=nextQuestion;
 
+/* ============================================================
+   STARDUST DISPLAY & SHOP
+============================================================ */
+function updateStardust(){
+  var el=Q('#stardust-num');if(el)el.textContent=S.stardust||0;
+  var bal=Q('#shop-balance-num');if(bal)bal.textContent=S.stardust||0;
+}
+
+// Shop items
+var SHOP_ITEMS=[
+  {id:'fate1',name:'纠缠之缘 ×1',desc:'单次祈愿',icon:'🌠',price:15,action:function(){addFates(1)}},
+  {id:'fate5',name:'纠缠之缘 ×5',desc:'五次祈愿（优惠）',icon:'🌟',price:65,action:function(){addFates(5)}},
+  {id:'fate10',name:'纠缠之缘 ×10',desc:'十连祈愿（优惠）',icon:'✨',price:120,action:function(){addFates(10)}},
+];
+function addFates(n){
+  var fc=Q('#fate-num');var v=parseInt(fc.textContent)||0;
+  fc.textContent=v+n;
+  fc.classList.remove('bump');void fc.offsetWidth;fc.classList.add('bump');
+}
+
+function openShop(){
+  if(drawing||mgState.active||quizState.active)return;
+  updateStardust();
+  Q('#shop-overlay').classList.add('open');
+  renderShopItems();
+}
+function closeShop(){Q('#shop-overlay').classList.remove('open')}
+
+function renderShopItems(){
+  var html='';
+  SHOP_ITEMS.forEach(function(item){
+    var canBuy=(S.stardust||0)>=item.price;
+    html+='<div class="shop-item">';
+    html+='<div class="shop-item-icon">'+item.icon+'</div>';
+    html+='<div class="shop-item-info"><div class="shop-item-name">'+item.name+'</div><div class="shop-item-desc">'+item.desc+'</div></div>';
+    html+='<div class="shop-item-price">'+item.price+' ✦</div>';
+    html+='<button class="shop-item-btn" onclick="buyShopItem(\''+item.id+'\')" '+(canBuy?'':'disabled')+'>兑换</button>';
+    html+='</div>';
+  });
+  Q('#shop-items').innerHTML=html;
+}
+window.buyShopItem=function(id){
+  var item=SHOP_ITEMS.find(function(i){return i.id===id});
+  if(!item)return;
+  if((S.stardust||0)<item.price)return;
+  S.stardust-=item.price;
+  item.action();
+  updateStardust();
+  renderShopItems();
+  save();
+  showToast('兑换成功！获得 '+item.name);
+};
+
+// Wire up shop open/close
+Q('#btn-exchange').addEventListener('click',openShop);
+Q('#shop-close').addEventListener('click',closeShop);
+Q('#shop-overlay').addEventListener('click',function(e){if(e.target===Q('#shop-overlay'))closeShop()});
+// Init stardust display on load
+updateStardust();
+
 function moveCharacter(){
   const area=Q('#mg-play-area');
   const rect=area.getBoundingClientRect();
@@ -3844,6 +4055,7 @@ document.addEventListener('keydown',e=>{
   if(quizState.active){closeQuiz();return;}
   if(mgState.active){closeMinigame(true);return;}
   if(drawing||wishStage.classList.contains('active')){skipAnimation();return;}
+  var so=Q('#shop-overlay');if(so&&so.classList.contains('open')){closeShop();return;}
 });
 
 /* ============================================================
@@ -3852,7 +4064,7 @@ document.addEventListener('keydown',e=>{
 function load(){
   try{
     const d=JSON.parse(localStorage.getItem('wish_genshin_v5'));
-    if(d){S.total=d.td||0;S.hist=d.hi||[];S.bn=d.bn||0;S.muted=d.mu||false;
+    if(d){S.total=d.td||0;S.hist=d.hi||[];S.bn=d.bn||0;S.muted=d.mu||false;S.stardust=d.sd||0;
       const a=v=>Array.isArray(v)?v:[v||0,v||0,v||0];
       const ag=v=>Array.isArray(v)?v:[!!v,false,false];
       S.p5=a(d.p5);S.p4=a(d.p4);S.p6=a(d.p6);S.guar=ag(d.gu);
@@ -3860,7 +4072,7 @@ function load(){
   }catch(e){}
 }
 function save(){
-  try{localStorage.setItem('wish_genshin_v5',JSON.stringify({td:S.total,p5:S.p5,p4:S.p4,p6:S.p6,gu:S.guar,hi:S.hist.slice(-500),bn:S.bn,mu:S.muted}))}catch(e){}
+  try{localStorage.setItem('wish_genshin_v5',JSON.stringify({td:S.total,p5:S.p5,p4:S.p4,p6:S.p6,gu:S.guar,hi:S.hist.slice(-500),bn:S.bn,mu:S.muted,sd:S.stardust||0}))}catch(e){}
   if(window.SyncVault) SyncVault.autoSync();
 }
 
