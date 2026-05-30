@@ -843,6 +843,11 @@ footer{
 </head>
 <body>
 
+<!-- Auth guard: redirect to login if no profile -->
+<script>
+if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){location.replace('login.html')}
+</script>
+
 <canvas id="starfield"></canvas>
 <canvas id="particles"></canvas>
 <div id="ur-flash"></div>
@@ -862,6 +867,10 @@ footer{
 
 <div id="app">
   <header>
+    <a href="login.html" id="top-traveler" style="position:absolute;top:8px;right:60px;display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:10px;border:1px solid rgba(200,160,80,0.15);background:rgba(20,15,10,0.4);color:#c9bd9d;text-decoration:none;font-size:0.65rem;font-family:'Marcellus',serif;cursor:pointer;transition:all 0.3s;z-index:5;">
+      <span id="tb-avatar" style="font-size:0.8rem;">✦</span>
+      <span id="tb-name" style="max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#d4af6e;">旅者</span>
+    </a>
     <div class="header-ornament-top"></div>
     <h1>占卜家</h1>
     <p class="subtitle">星辰为引 卡牌为镜 窥见命运的轨迹</p>
@@ -1328,6 +1337,28 @@ function init(){
   requestAnimationFrame(animate);
 }
 init();
+})();
+</script>
+<script src="assets/sync.js"></script>
+<script>
+// Populate traveler badge from xlab-profile or GitHub
+(function(){
+  var a=document.getElementById('tb-avatar');
+  var n=document.getElementById('tb-name');
+  if(!a||!n)return;
+  var gh=sessionStorage.getItem('gh_user');
+  if(gh){try{gh=JSON.parse(gh);}catch(e){gh=null}}
+  if(gh){
+    var img=document.createElement('img');
+    img.src=gh.avatar_url;img.style.width='100%';img.style.height='100%';img.style.borderRadius='50%';img.style.display='block';
+    a.textContent='';a.appendChild(img);a.style.padding='0';
+    n.textContent=gh.login;
+    return;
+  }
+  var p;try{p=JSON.parse(localStorage.getItem('xlab-profile'));}catch(e){}
+  if(!p)return;
+  var av={stellar:'✦',moon:'☾',comet:'☄',nova:'✧',galaxy:'◈',astronaut:'◆'};
+  a.textContent=av[p.avatar]||'✦';n.textContent=p.name;
 })();
 </script>
 </body>

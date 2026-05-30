@@ -188,9 +188,18 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
 </head>
 <body>
 
+<!-- Auth guard: redirect to login if no profile -->
+<script>
+if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){location.replace('login.html')}
+</script>
+
 <canvas id="starfield"></canvas>
 
 <a href="index.html" class="back-arrow" title="返回主页">←</a>
+<a href="login.html" class="traveler-badge-s" id="top-traveler" title="旅者档案" style="position:fixed;top:28px;left:78px;z-index:10;display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:16px;background:rgba(18,22,40,0.38);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-top:1px solid rgba(212,184,122,0.12);border-left:1px solid rgba(212,184,122,0.06);cursor:pointer;font-size:0.68rem;color:var(--t2);text-decoration:none;font-family:var(--fu);box-shadow:0 2px 10px rgba(0,0,0,0.3);">
+  <span id="tb-avatar" style="font-size:0.85rem;">✦</span>
+  <span id="tb-name" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--g2);">旅者</span>
+</a>
 
 <main class="page">
   <h1 class="page-title">数 据 统 计</h1>
@@ -638,7 +647,29 @@ window.addEventListener('resize',()=>{
 </script>
 <script src="assets/xlab-gl.js"></script>
 <script>window.addEventListener('DOMContentLoaded',()=>window.XLabGL && XLabGL.boot({preset:'cobalt-cyan'}));</script>
+<script src="assets/sync.js"></script>
 <script src="assets/geek.js"></script>
+<script>
+// Populate traveler badge from xlab-profile or GitHub
+(function(){
+  var a=document.getElementById('tb-avatar');
+  var n=document.getElementById('tb-name');
+  if(!a||!n)return;
+  var gh=sessionStorage.getItem('gh_user');
+  if(gh){try{gh=JSON.parse(gh);}catch(e){gh=null}}
+  if(gh){
+    var img=document.createElement('img');
+    img.src=gh.avatar_url;img.style.width='100%';img.style.height='100%';img.style.borderRadius='50%';img.style.display='block';
+    a.textContent='';a.appendChild(img);a.style.padding='0';
+    n.textContent=gh.login;
+    return;
+  }
+  var p;try{p=JSON.parse(localStorage.getItem('xlab-profile'));}catch(e){}
+  if(!p)return;
+  var av={stellar:'✦',moon:'☾',comet:'☄',nova:'✧',galaxy:'◈',astronaut:'◆'};
+  a.textContent=av[p.avatar]||'✦';n.textContent=p.name;
+})();
+</script>
 
 </body>
 </html>

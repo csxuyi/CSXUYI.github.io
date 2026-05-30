@@ -499,6 +499,11 @@
 </head>
 <body>
 
+<!-- Auth guard: redirect to login if no profile -->
+<script>
+if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){location.replace('login.html')}
+</script>
+
 <div class="stage"></div>
 <div class="vignette"></div>
 <div class="spotlight"></div>
@@ -510,6 +515,10 @@
 <svg class="deco br" width="60" height="60" viewBox="0 0 60 60" fill="none"><path d="M2 2 L58 2 M2 2 L2 58" stroke="currentColor" stroke-width="0.5"/><path d="M8 8 L40 8 M8 8 L8 40" stroke="currentColor" stroke-width="0.5"/><circle cx="8" cy="8" r="2" fill="currentColor"/><path d="M14 2 L14 14 L2 14" stroke="currentColor" stroke-width="0.8"/></svg>
 
 <nav class="nav-btns">
+  <a href="login.html" class="nav-btn" id="top-traveler" title="旅者档案" style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:0.3em;gap:4px;">
+    <span id="tb-avatar">✦</span>
+    <span id="tb-name" style="max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">旅者</span>
+  </a>
   <a href="index.html" class="nav-btn" title="返回主页">⌂</a>
   <a href="wish.html" class="nav-btn" title="前往祈愿">✦</a>
 </nav>
@@ -921,6 +930,28 @@ document.addEventListener('mouseenter',()=>cursor.style.opacity='1');
 renderPage(0);
 </script>
 
+<script src="assets/sync.js"></script>
 <script src="assets/geek.js"></script>
+<script>
+// Populate traveler badge from xlab-profile or GitHub
+(function(){
+  var a=document.getElementById('tb-avatar');
+  var n=document.getElementById('tb-name');
+  if(!a||!n)return;
+  var gh=sessionStorage.getItem('gh_user');
+  if(gh){try{gh=JSON.parse(gh);}catch(e){gh=null}}
+  if(gh){
+    var img=document.createElement('img');
+    img.src=gh.avatar_url;img.style.width='100%';img.style.height='100%';img.style.borderRadius='50%';img.style.display='block';
+    a.textContent='';a.appendChild(img);a.style.padding='0';
+    n.textContent=gh.login;
+    return;
+  }
+  var p;try{p=JSON.parse(localStorage.getItem('xlab-profile'));}catch(e){}
+  if(!p)return;
+  var av={stellar:'✦',moon:'☾',comet:'☄',nova:'✧',galaxy:'◈',astronaut:'◆'};
+  a.textContent=av[p.avatar]||'✦';n.textContent=p.name;
+})();
+</script>
 </body>
 </html>

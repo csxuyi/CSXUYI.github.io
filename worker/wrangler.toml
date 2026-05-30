@@ -1,0 +1,7 @@
+name = "xlab-auth"
+main = "stellarvault.js"
+compatibility_date = "2025-01-01"
+
+# 免费计划: 10万请求/天, 足够用
+# 部署后 URL: https://xlab-auth.YOUR_USERNAME.workers.dev
+# 无需自定义路由, Worker 自动分配 *.workers.dev 子域名

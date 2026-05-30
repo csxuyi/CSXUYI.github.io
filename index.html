@@ -84,8 +84,36 @@ html,body{
 .hero .subtag .gold{color:var(--gold)}
 .hero .subtitle{
   font-family:"JetBrains Mono",ui-monospace,monospace;font-size:0.78rem;color:var(--t2);
-  letter-spacing:0.16em;margin-bottom:54px;opacity:0.7;
+  letter-spacing:0.16em;margin-bottom:22px;opacity:0.7;
 }
+.traveler-greeting{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:16px;margin-bottom:28px;
+  background:rgba(18,22,40,0.22);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-top:1px solid rgba(255,255,255,0.10);
+  border-left:1px solid rgba(255,255,255,0.06);
+  border-right:1px solid rgba(255,255,255,0.03);
+  border-bottom:1px solid rgba(255,255,255,0.02);
+  font-family:"JetBrains Mono",ui-monospace,monospace;
+  font-size:0.7rem;color:var(--t2);letter-spacing:0.06em;
+  cursor:pointer;transition:all 0.3s ease;
+  box-shadow:0 4px 16px rgba(0,0,0,0.3);
+}
+.traveler-greeting:hover{
+  border-top-color:rgba(212,184,122,0.25);
+  border-left-color:rgba(212,184,122,0.15);
+  color:var(--text);
+  box-shadow:0 6px 24px rgba(0,0,0,0.4),0 0 16px rgba(212,184,122,0.08);
+}
+.greeting-avatar{
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.85rem;flex-shrink:0;
+  background:rgba(212,184,122,0.08);
+  border-top:1px solid rgba(212,184,122,0.18);
+}
+#greeting-name{color:var(--g3);font-weight:600}
 .hero .brand{
   font-family:"JetBrains Mono",ui-monospace,monospace;font-size:0.7rem;
   letter-spacing:0.32em;color:var(--gold);opacity:0.9;
@@ -304,12 +332,13 @@ html,body{
 }
 
 /* ===== Portal auto-fade: dim when mouse is away ===== */
-.hero .logo,.hero .subtitle,.hero .portals{
+.hero .logo,.hero .subtitle,.hero .portals,.traveler-greeting{
   transition:opacity 0.8s ease; /* slow fade-out */
 }
 .hero.dimmed .logo{opacity:0.45}
 .hero.dimmed .subtitle{opacity:0.25}
 .hero.dimmed .portals{opacity:0.12;pointer-events:none}
+.hero.dimmed .traveler-greeting{opacity:0.35;pointer-events:none}
 .hero.dimmed .portals:hover{opacity:0.12}
 
 /* ===== Guestbook modal ===== */
@@ -365,6 +394,11 @@ html,body{
 </head>
 <body>
 
+<!-- Auth guard: redirect to login if no profile -->
+<script>
+if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){location.replace('login.html')}
+</script>
+
 <canvas id="canvas-2d" style="display:none"></canvas>
 <canvas id="canvas"></canvas>
 <canvas id="star-canvas"></canvas>
@@ -375,6 +409,11 @@ html,body{
   <h1 class="logo"><span class="lb">X[</span><span id="logo-text">STELLAR_WISH</span><span class="lb">]</span><span class="cur"></span></h1>
   <p class="subtag">▸ <span id="boot-line">stellar.wish.exec()</span></p>
   <p class="subtitle" id="uptime-line">▸ uptime: --</p>
+  <div class="traveler-greeting" id="traveler-greeting" onclick="location.href='login.html'" title="修改旅者身份">
+    <span class="greeting-avatar" id="greeting-avatar">✦</span>
+    <span>旅者 <b id="greeting-name">—</b></span>
+  </div>
+
 
   <div class="portals">
     <a href="wish.html" class="portal wish">
@@ -517,9 +556,34 @@ html,body{
 })();
 </script>
 
+
+  // Populate traveler greeting from xlab-profile or GitHub
+  (function(){
+    var ga = document.getElementById("greeting-avatar");
+    var gn = document.getElementById("greeting-name");
+    if(!ga||!gn) return;
+    // GitHub login takes priority
+    var ghUser = sessionStorage.getItem("gh_user");
+    if(ghUser){try{ghUser=JSON.parse(ghUser);}catch(e){ghUser=null}}
+    if(ghUser){
+      var img=document.createElement("img");
+      img.src=ghUser.avatar_url;img.style.width="22px";img.style.height="22px";img.style.borderRadius="50%";img.style.display="block";
+      ga.textContent="";ga.appendChild(img);ga.style.padding="1px";
+      gn.textContent=ghUser.login;
+      return;
+    }
+    // Guest profile fallback
+    var p;try{p=JSON.parse(localStorage.getItem("xlab-profile"));}catch(e){}
+    if(!p)return;
+    var AV={stellar:"✦",moon:"☾",comet:"☄",nova:"✧",galaxy:"◈",astronaut:"◆"};
+    ga.textContent=AV[p.avatar]||"✦";
+    gn.textContent=p.name;
+  })();
+</script>
 <!-- Dimmed-state return button -->
 <button class="return-btn" id="return-btn" title="回到入口">✦</button>
 
+<script src="assets/sync.js"></script>
 <script src="assets/geek.js"></script>
 
 <!-- ===== Guestbook modal ===== -->
@@ -722,7 +786,7 @@ html,body{
 
   function undim(){
     // Force instant reappear via inline style, then clear for next fade-out
-    var els = hero.querySelectorAll('.logo,.subtitle,.portals');
+    var els = hero.querySelectorAll('.logo,.subtitle,.portals,.traveler-greeting');
     els.forEach(function(el){ el.style.transition = 'none'; });
     hero.classList.remove('dimmed');
     returnBtn.classList.remove('visible');

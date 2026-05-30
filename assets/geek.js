@@ -395,7 +395,11 @@
   <span class="ok">clear</span>                   清屏 (Ctrl+L)
   <span class="ok">exit</span>                    关闭终端 (Esc)`);
     },
-    whoami() { print('<span class="ok">stellar-traveler</span>  uid=233 gid=233 groups=233(wishers)'); },
+    whoami() {
+      var name='stellar-traveler';
+      try{var p=JSON.parse(localStorage.getItem('xlab-profile'));if(p&&p.name)name=p.name;}catch(e){}
+      print('<span class="ok">'+name.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>  uid=233 gid=233 groups=233(wishers)');
+    },
     ls() {
       print(`<span class="gold">drwxr-xr-x</span>  index.html   <span class="dim">主入口</span>
 <span class="gold">drwxr-xr-x</span>  wish.html    <span class="dim">祈愿 · 抽卡</span>
