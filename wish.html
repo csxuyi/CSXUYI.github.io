@@ -3502,7 +3502,7 @@ function doDraw(n){
     }
   }
   // Duplicate detection: check against pre-existing history
-  const prevNames=new Set();S.hist.forEach(h=>prevNames.add(h.card.name));
+  const prevNames=new Set();S.hist.forEach(h=>{if(h&&h.card&&h.card.name)prevNames.add(h.card.name)});
   const dupes=[];let addedStardust=0;
   for(const r of rs){
     const isDupe=prevNames.has(r.card.name);
@@ -3976,12 +3976,14 @@ window.buyShopItem=function(id){
   showToast('兑换成功！获得 '+item.name);
 };
 
-// Wire up shop open/close
-Q('#btn-exchange').addEventListener('click',openShop);
-Q('#shop-close').addEventListener('click',closeShop);
-Q('#shop-overlay').addEventListener('click',function(e){if(e.target===Q('#shop-overlay'))closeShop()});
+// Wire up shop open/close (guarded)
+try{
+  var be=Q('#btn-exchange');if(be)be.addEventListener('click',openShop);
+  var sc=Q('#shop-close');if(sc)sc.addEventListener('click',closeShop);
+  var so2=Q('#shop-overlay');if(so2)so2.addEventListener('click',function(e){if(e.target===so2)closeShop()});
+}catch(e){console.warn('shop bindings:',e)}
 // Init stardust display on load
-updateStardust();
+try{updateStardust()}catch(e){console.warn('updateStardust:',e)}
 
 function moveCharacter(){
   const area=Q('#mg-play-area');
