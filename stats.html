@@ -270,6 +270,12 @@ if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){l
     <div class="collection-text" id="collection-text"></div>
   </div>
 
+  <!-- Fun stats: best/worst pulls -->
+  <div class="glass-card" id="fun-stats-card" style="display:none">
+    <h3>趣味统计</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px" id="fun-stats-grid"></div>
+  </div>
+
   <!-- Recent history -->
   <div class="glass-card">
     <h3>最近祈愿</h3>
@@ -496,6 +502,33 @@ function renderAll(){
       <div class="h-time">${ts}</div>
     </div>`;
   }).join('');
+
+  // Fun stats
+  var f5=data.history.filter(function(h){return h.rarity===5}).length;
+  var avg5=f5>0?'平均 <b>'+(data.total/f5).toFixed(1)+'</b> 抽出 5★':'尚未抽出 5★';
+  // Luckiest 10-pull: scan in batches of 10
+  var bestBatch=0,bestCount=0;
+  for(var i=0;i+9<data.history.length;i+=10){
+    var c=0;for(var j=i;j<i+10;j++){if(data.history[j].rarity>=5)c++}
+    if(c>bestCount){bestCount=c;bestBatch=i}
+  }
+  var bestInfo=bestCount>0?'最佳十连：<b>'+bestCount+'</b> 个 5★+' :'暂无十连数据';
+  // Worst pity
+  var maxPity=Math.max(data.p5||0,data.p4||0,data.p6||0);
+  // Most pulled
+  var nameCount={};data.history.forEach(function(h){var n=h.card&&h.card.name;if(n)nameCount[n]=(nameCount[n]||0)+1});
+  var mostPulled='';var mostCount=0;
+  for(var k in nameCount){if(nameCount[k]>mostCount){mostCount=nameCount[k];mostPulled=k}}
+  var mostInfo=mostPulled?'最多抽到：<b>'+mostPulled+'</b> ×'+mostCount:'暂无';
+  var funHTML='<div style="font-size:0.8rem;color:var(--t2);line-height:2">';
+  funHTML+='<div>'+avg5+'</div>';
+  funHTML+='<div>'+bestInfo+'</div>';
+  funHTML+='<div>最远保底：<b>'+maxPity+'</b> 抽</div>';
+  funHTML+='<div>'+mostInfo+'</div>';
+  funHTML+='<div>累计获得星辉：<b>'+(data.sd||0)+'</b></div>';
+  funHTML+='</div>';
+  document.getElementById('fun-stats-grid').innerHTML=funHTML;
+  document.getElementById('fun-stats-card').style.display='block';
 }
 
 /* ============================
