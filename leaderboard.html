@@ -57,7 +57,23 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   margin-bottom:8px;letter-spacing:0.1em;
 }
-.page-subtitle{text-align:center;font-size:0.82rem;color:var(--t2);margin-bottom:32px}
+.page-subtitle{text-align:center;font-size:0.82rem;color:var(--t2);margin-bottom:24px}
+
+/* Tab switcher */
+.lb-tabs{
+  display:flex;justify-content:center;gap:8px;margin-bottom:20px;
+}
+.lb-tab{
+  padding:8px 24px;border-radius:10px;font-size:0.8rem;cursor:pointer;
+  font-family:var(--fu);letter-spacing:0.06em;transition:all 0.3s;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);color:var(--t2);
+}
+.lb-tab:hover{border-color:rgba(255,255,255,0.16);color:var(--text)}
+.lb-tab.active{
+  background:rgba(212,184,122,0.1);border-color:rgba(212,184,122,0.35);
+  color:var(--g3);
+}
 
 .glass-card{
   border-radius:20px;padding:24px;
@@ -92,6 +108,7 @@ canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
   .glass-card{padding:16px 10px}
   .lb-table th,.lb-table td{padding:8px 4px;font-size:0.7rem}
   .lb-stat{font-size:0.65rem}.lb-stat.big{font-size:0.75rem}
+  .lb-tab{padding:6px 16px;font-size:0.72rem}
 }
 </style>
 </head>
@@ -116,13 +133,16 @@ if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){l
   <h1 class="page-title">答题排行榜</h1>
   <p class="page-subtitle">— TOP 20 · 云端同步 —</p>
 
+  <div class="lb-tabs">
+    <button class="lb-tab active" data-tab="count" onclick="switchTab('count')">📚 答题数量</button>
+    <button class="lb-tab" data-tab="accuracy" onclick="switchTab('accuracy')">🎯 正确率</button>
+  </div>
+
   <div class="glass-card">
     <div class="loading" id="lb-loading">正在加载排行榜...</div>
     <div class="error" id="lb-error" style="display:none">加载失败，请稍后重试</div>
     <table class="lb-table" id="lb-table" style="display:none">
-      <thead><tr>
-        <th>#</th><th></th><th>用户</th><th>答题</th><th>正确</th><th>准确率</th><th>最高分</th>
-      </tr></thead>
+      <thead><tr id="lb-header"></tr></thead>
       <tbody id="lb-tbody"></tbody>
     </table>
   </div>
@@ -136,40 +156,75 @@ var w,h,stars=[];
 function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
 resize();addEventListener('resize',resize);
 for(var i=0;i<80;i++)stars.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.3,s:Math.random()*.3+.3});
-function draw(t){ctx.clearRect(0,0,w,h);var tw=.6+.4*Math.sin(t*.001);stars.forEach(function(s){var sy=h>w?.9:1;ctx.beginPath();ctx.arc(s.x,s.y*w/h*window.innerHeight/(window.innerWidth||1)*sy,s.r,0,Math.PI*2);ctx.fillStyle='rgba(255,225,160,'+(s.s*tw)+')';ctx.fill()});requestAnimationFrame(draw)}
+function draw(t){ctx.clearRect(0,0,w,h);var tw=.6+.4*Math.sin(t*.001);stars.forEach(function(s){ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle='rgba(255,225,160,'+(s.s*tw)+')';ctx.fill()});requestAnimationFrame(draw)}
 requestAnimationFrame(draw);
 })();
 </script>
 
 <script>
 var WORKER_URL='https://xlab-auth.xlab-stellarvault.workers.dev';
+var allEntries=[];
+var currentTab='count';
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.lb-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===tab)});
+  renderTable();
+}
+
+function renderTable(){
+  var entries=allEntries.slice();
+  var header,rankLabel;
+
+  if(currentTab==='count'){
+    // Sort by total questions
+    entries.sort(function(a,b){return(b.totalQ||0)-(a.totalQ||0)});
+    header='<th>#</th><th></th><th>用户</th><th>答题数</th><th>正确</th><th>正确率</th><th>最高分</th>';
+  } else {
+    // Sort by accuracy (only users with >=10 questions to avoid 1/1=100%)
+    entries.sort(function(a,b){return(b.accuracy||0)-(a.accuracy||0)});
+    header='<th>#</th><th></th><th>用户</th><th>正确率</th><th>答题数</th><th>正确</th><th>最高分</th>';
+  }
+
+  document.getElementById('lb-header').innerHTML=header;
+
+  var top=entries.slice(0,20);
+  if(!top.length){
+    document.getElementById('lb-tbody').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--t2);padding:30px">还没有人上榜，快去答题吧！</td></tr>';
+    return;
+  }
+
+  var html='';
+  top.forEach(function(e,i){
+    var rank=i+1;
+    var rc=rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
+    var rankIcon=rank<=3?['🥇','🥈','🥉'][i]:rank;
+    html+='<tr>';
+    html+='<td class="lb-rank '+rc+'">'+rankIcon+'</td>';
+    html+='<td><img class="lb-avatar" src="'+e.avatar+'" onerror="this.style.display=\'none\'" alt=""></td>';
+    html+='<td class="lb-name">'+e.login+'</td>';
+    if(currentTab==='count'){
+      html+='<td class="lb-stat big">'+e.totalQ+'</td>';
+      html+='<td class="lb-stat">'+e.totalC+'</td>';
+      html+='<td class="lb-stat">'+e.accuracy+'%</td>';
+    } else {
+      html+='<td class="lb-stat big" style="color:var(--g3)">'+e.accuracy+'%</td>';
+      html+='<td class="lb-stat">'+e.totalQ+'</td>';
+      html+='<td class="lb-stat">'+e.totalC+'</td>';
+    }
+    html+='<td class="lb-stat">'+e.highScore+'/10</td>';
+    html+='</tr>';
+  });
+  document.getElementById('lb-tbody').innerHTML=html;
+}
 
 fetch(WORKER_URL+'/api/leaderboard')
 .then(function(r){return r.json()})
 .then(function(data){
   document.getElementById('lb-loading').style.display='none';
-  var entries=data.entries||[];
-  if(!entries.length){
-    document.getElementById('lb-loading').style.display='block';
-    document.getElementById('lb-loading').textContent='还没有人上榜，快去答题吧！';
-    return;
-  }
   document.getElementById('lb-table').style.display='';
-  var html='';
-  entries.forEach(function(e,i){
-    var rank=i+1;
-    var rc=rank===1?'gold':rank===2?'silver':rank===3?'bronze':'';
-    html+='<tr>';
-    html+='<td class="lb-rank '+rc+'">'+(rank<=3?['🥇','🥈','🥉'][i]:rank)+'</td>';
-    html+='<td><img class="lb-avatar" src="'+e.avatar+'" onerror="this.style.display=\'none\'" alt=""></td>';
-    html+='<td class="lb-name">'+e.login+'</td>';
-    html+='<td class="lb-stat big">'+e.totalQ+'</td>';
-    html+='<td class="lb-stat">'+e.totalC+'</td>';
-    html+='<td class="lb-stat">'+e.accuracy+'%</td>';
-    html+='<td class="lb-stat">'+e.highScore+'/10</td>';
-    html+='</tr>';
-  });
-  document.getElementById('lb-tbody').innerHTML=html;
+  allEntries=data.entries||[];
+  renderTable();
 })
 .catch(function(){
   document.getElementById('lb-loading').style.display='none';
