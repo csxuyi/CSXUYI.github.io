@@ -155,6 +155,45 @@ export default {
       } catch (e) { return corsJson({ error: e.message }, 500); }
     }
 
+    // POST /api/submit — create a card submission Issue
+    if (url.pathname === '/api/submit' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        if (!body.name || !body.img || !body.desc) return corsJson({ error: 'missing fields' }, 400);
+        const rarity = body.rarity || 5;
+        const stars = '★'.repeat(rarity) + '☆'.repeat(Math.max(0, 5 - rarity));
+        const issueBody = [
+          '### 角色名称',
+          body.name,
+          '',
+          '### 稀有度',
+          rarity + '★ (' + stars + ')',
+          '',
+          '### 图片 URL',
+          body.img,
+          '',
+          '### 卡牌描述',
+          body.desc,
+          '',
+          '_投稿人: ' + (body.submitter || '匿名') + '_',
+        ].join('\n');
+        const issueRes = await fetch(
+          'https://api.github.com/repos/csxuyi/CSXUYI.github.io/issues',
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${env.GIST_TOKEN}`, 'User-Agent': 'XLab', 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
+            body: JSON.stringify({ title: '[投稿] ' + body.name, body: issueBody, labels: ['submission'] }),
+          }
+        );
+        if (!issueRes.ok) {
+          const err = await issueRes.text();
+          return corsJson({ error: 'failed to create issue: ' + err }, 500);
+        }
+        const issue = await issueRes.json();
+        return corsJson({ ok: true, issueUrl: issue.html_url, number: issue.number });
+      } catch (e) { return corsJson({ error: e.message }, 500); }
+    }
+
     // Health check
     if (url.pathname === '/api/health') {
       return corsJson({ status: 'ok', service: 'xlab-stellarvault' });

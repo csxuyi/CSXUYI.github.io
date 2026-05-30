@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>X[SUBMIT] · xLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#D4B87A;--g2:#E8D5A3;--g3:#F5E6CC;--g4:#B89A50;
+  --purple:#B08FFF;--text:#E8E0D0;--t2:#9999AA;--t3:#666680;
+  --ft:"Noto Serif SC","STSong","SimSun",serif;
+  --fu:"Inter","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow-x:hidden}
+body{
+  font-family:var(--fu);background:#05081a;color:var(--text);
+  -webkit-font-smoothing:antialiased;min-height:100vh;
+}
+canvas#starfield{position:fixed;inset:0;z-index:0;pointer-events:none}
+.vignette{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 40%,transparent 30%,rgba(0,0,0,0.55) 100%);
+}
+
+.top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:10px 22px;
+  background:rgba(8,12,22,0.42);backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.back-arrow{
+  font-family:"JetBrains Mono",monospace;font-size:.82rem;
+  color:var(--gold);text-decoration:none;
+  display:flex;align-items:center;gap:6px;
+  background:rgba(212,184,122,0.06);border:1px solid rgba(212,184,122,0.22);
+  border-radius:6px;padding:7px 12px;transition:all .25s;
+}
+.back-arrow:hover{border-color:var(--gold);background:rgba(212,184,122,0.12)}
+
+.page{
+  position:relative;z-index:2;
+  padding:80px 20px 40px;max-width:560px;margin:0 auto;
+}
+.page-title{
+  font-family:var(--ft);font-size:2rem;font-weight:900;text-align:center;
+  background:linear-gradient(180deg,var(--g3),var(--gold),var(--g4));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:4px;letter-spacing:0.1em;
+}
+.page-subtitle{text-align:center;font-size:0.8rem;color:var(--t2);margin-bottom:28px}
+
+.form-card{
+  border-radius:20px;padding:28px 24px;
+  background:rgba(18,22,40,0.35);backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-top:1px solid rgba(255,255,255,0.12);
+  border-left:1px solid rgba(255,255,255,0.08);
+  border-right:1px solid rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.02);
+  box-shadow:0 16px 40px rgba(0,0,0,0.4);
+}
+.form-group{margin-bottom:18px}
+.form-label{
+  display:block;font-family:"JetBrains Mono",monospace;font-size:.7rem;
+  color:var(--t2);letter-spacing:.1em;margin-bottom:6px;
+}
+.form-label::before{content:'▸ ';color:var(--gold)}
+.form-input,.form-select,.form-textarea{
+  width:100%;padding:11px 14px;border-radius:10px;
+  font-family:"Inter","PingFang SC",sans-serif;font-size:.85rem;color:var(--text);
+  background:rgba(255,255,255,0.04);
+  border-top:1px solid rgba(255,255,255,0.10);
+  border-left:1px solid rgba(255,255,255,0.06);
+  border-right:1px solid rgba(255,255,255,0.03);
+  border-bottom:1px solid rgba(255,255,255,0.01);
+  outline:none;transition:all .3s;
+}
+.form-input:focus,.form-textarea:focus{
+  border-top-color:rgba(212,184,122,0.35);
+  box-shadow:0 0 20px rgba(212,184,122,0.08);
+}
+.form-select{
+  cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+}
+.form-textarea{min-height:90px;resize:vertical;line-height:1.5}
+.form-hint{font-size:.62rem;color:var(--t3);margin-top:4px}
+
+.btn-submit{
+  width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;
+  font-family:var(--ft);font-size:.95rem;letter-spacing:2px;
+  background:linear-gradient(180deg,rgba(30,22,60,0.85),rgba(14,10,32,0.95));
+  color:var(--g2);transition:all .25s;position:relative;overflow:hidden;
+  border-top:1px solid rgba(212,184,122,0.2);
+}
+.btn-submit:hover:not(:disabled){
+  transform:translateY(-2px);
+  box-shadow:0 0 24px rgba(212,184,122,0.25);
+}
+.btn-submit:disabled{opacity:.35;cursor:not-allowed}
+
+.submit-success{
+  text-align:center;padding:30px;display:none;
+}
+.submit-success h3{
+  font-family:var(--ft);font-size:1.2rem;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;
+}
+.submit-success p{color:var(--t2);font-size:.82rem;line-height:1.6}
+.submit-success a{color:var(--gold)}
+
+@media(max-width:480px){
+  .page-title{font-size:1.5rem}
+  .form-card{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+<div id="pt-overlay" style="position:fixed;inset:0;z-index:9999;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,rgba(5,8,26,0.92),rgba(2,2,12,0.98));opacity:0;transition:opacity 0.35s ease"></div>
+
+<canvas id="starfield"></canvas>
+<div class="vignette"></div>
+
+<div class="top-bar">
+  <a href="index.html" class="back-arrow">← 主页</a>
+  <div></div>
+  <div></div>
+</div>
+
+<main class="page">
+  <h1 class="page-title">卡牌投稿</h1>
+  <p class="page-subtitle">▸ 提交你的卡牌创意，审核通过后加入抽卡池</p>
+
+  <div class="form-card" id="form-card">
+    <div class="form-group">
+      <label class="form-label">角色名称</label>
+      <input class="form-input" id="f-name" placeholder="例如：星穹旅人" maxlength="20">
+    </div>
+    <div class="form-group">
+      <label class="form-label">稀有度</label>
+      <select class="form-select" id="f-rarity">
+        <option value="3">3★</option>
+        <option value="4">4★</option>
+        <option value="5" selected>5★</option>
+        <option value="6">6★</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">图片链接</label>
+      <input class="form-input" id="f-image" placeholder="https://... 图片直链（jpg/png/gif）" maxlength="500">
+      <p class="form-hint">推荐用 <a href="https://imgur.com" target="_blank" style="color:var(--gold)">imgur.com</a> 或 <a href="https://postimages.org" target="_blank" style="color:var(--gold)">postimages.org</a> 上传</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">卡牌描述</label>
+      <textarea class="form-textarea" id="f-desc" placeholder="简短描述，显示在卡牌上..." maxlength="200"></textarea>
+    </div>
+    <button class="btn-submit" id="btn-submit" onclick="doSubmit()">提交投稿</button>
+    <p class="form-hint" style="text-align:center;margin-top:10px">投稿人将自动设为已登录的身份</p>
+  </div>
+
+  <div class="submit-success" id="submit-success">
+    <h3>投稿成功 ✦</h3>
+    <p>你的卡牌已提交审核。<br>审核通过后将加入抽卡池。</p>
+    <p style="margin-top:12px"><a href="submit.html">继续投稿</a> · <a href="index.html">返回主页</a></p>
+  </div>
+</main>
+
+<script>
+(function(){
+var c=document.getElementById('starfield');
+var ctx=c.getContext('2d');
+var w,h,stars=[];
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+for(var i=0;i<70;i++)stars.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*2+.4,s:Math.random()*.4+.3});
+function draw(t){ctx.clearRect(0,0,w,h);stars.forEach(function(s){var tw=.5+.5*Math.sin(t*.002+s.s*10);ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle='rgba(220,200,160,'+(s.s*tw*.7)+')';ctx.fill()});requestAnimationFrame(draw)}
+requestAnimationFrame(draw);
+})();
+</script>
+
+<script>
+var WORKER_URL='https://xlab-auth.xlab-stellarvault.workers.dev';
+
+function doSubmit(){
+  var btn=document.getElementById('btn-submit');
+  var name=document.getElementById('f-name').value.trim();
+  var rarity=parseInt(document.getElementById('f-rarity').value)||5;
+  var img=document.getElementById('f-image').value.trim();
+  var desc=document.getElementById('f-desc').value.trim();
+
+  if(!name){alert('请填写角色名称');return}
+  if(name.length<1||name.length>20){alert('角色名称1-20个字符');return}
+  if(!img){alert('请填写图片链接');return}
+  if(!/^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)/i.test(img)){alert('图片链接需要是 jpg/png/gif/webp 直链');return}
+  if(!desc){alert('请填写卡牌描述');return}
+
+  btn.disabled=true;btn.textContent='提交中...';
+
+  // Determine submitter identity
+  var submitter='匿名';
+  try{
+    var gh=JSON.parse(sessionStorage.getItem('gh_user')||'null');
+    if(gh&&gh.login)submitter=gh.login;
+    else{
+      var lp=JSON.parse(localStorage.getItem('xlab-profile')||'null');
+      if(lp&&lp.name)submitter=lp.name;
+    }
+  }catch(e){}
+
+  fetch(WORKER_URL+'/api/submit',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name,rarity,img,desc,submitter})
+  }).then(function(r){return r.json()}).then(function(data){
+    if(data.ok){
+      document.getElementById('form-card').style.display='none';
+      document.getElementById('submit-success').style.display='block';
+    }else{
+      alert('投稿失败: '+(data.error||'未知错误'));
+      btn.disabled=false;btn.textContent='提交投稿';
+    }
+  }).catch(function(e){
+    alert('网络错误，请稍后重试');
+    btn.disabled=false;btn.textContent='提交投稿';
+  });
+}
+</script>
+
+<script src="assets/page-transition.js"></script>
+</body>
+</html>
