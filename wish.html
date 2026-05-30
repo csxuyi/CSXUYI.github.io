@@ -3418,7 +3418,7 @@ function closeMinigame(keepCursor){
   clearTimeout(mgState._moveTimeout);
   Q('#minigame-overlay').classList.remove('open');
   Q('#mg-hammer').style.display='none';
-  if(keepCursor!==false)document.body.style.cursor='';
+  if(keepCursor!==false){document.body.style.cursor='';var area=Q('#mg-play-area');if(area)area.style.cursor='';}
   creditFate();
 }
 
@@ -3432,6 +3432,8 @@ function endMinigame(){
   Q('#mg-timer').classList.remove('urgent');
   Q('#mg-hammer').style.display='none'; // [BUGFIX] hide hammer when gameover shows
   document.body.style.cursor='';
+  // Restore cursor on play area (CSS cursor:none would override body cursor)
+  var area=Q('#mg-play-area'); if(area) area.style.cursor='default';
   creditFate();
   playTone(523,0.15,'sine',0.08);
   setTimeout(()=>playTone(659,0.15,'sine',0.08),150);
@@ -3502,8 +3504,12 @@ document.addEventListener('touchstart',e=>{if(mgState.active)handleWhack(e.touch
 Q('#btn-minigame').addEventListener('click',openMinigame);
 Q('#mg-close').addEventListener('click',()=>closeMinigame(true));
 Q('#mg-replay').addEventListener('click',()=>{closeMinigame(false);setTimeout(openMinigame,350)});
-// ESC to close minigame
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&mgState.active)closeMinigame(true)});
+// ESC: close minigame > skip wish animation
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(mgState.active){closeMinigame(true);return;}
+  if(drawing||wishStage.classList.contains('active')){skipAnimation();return;}
+});
 
 /* ============================================================
    PERSISTENCE
