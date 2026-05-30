@@ -1215,6 +1215,25 @@ function loop(t){
   upP(dt);drP();drawSF(t);
   requestAnimationFrame(loop);
 }
+function loadCommunityCards(cb){
+  var WORKER_URL='https://xlab-auth.xlab-stellarvault.workers.dev';
+  fetch(WORKER_URL+'/api/cards').then(function(r){return r.json()}).then(function(data){
+    var cards=data.cards||[];
+    cards.forEach(function(c){
+      var arr;
+      if(c.rarity===6)arr=C6;
+      else if(c.rarity===5)arr=C5;
+      else if(c.rarity===4)arr=C4;
+      else arr=C3;
+      // Avoid duplicates
+      var exists=arr.some(function(x){return x.id===c.id});
+      if(!exists)arr.push(c);
+    });
+    console.log('[Community] Loaded '+cards.length+' approved cards');
+  }).catch(function(e){console.warn('[Community] Failed to load cards:',e)})
+  .finally(function(){if(cb)cb()});
+}
+
 function init(){
   // Populate traveler badge from xlab-profile or GitHub
   (function(){
@@ -1235,7 +1254,8 @@ function init(){
     var av={stellar:'✦',moon:'☾',comet:'☄',nova:'✧',galaxy:'◈',astronaut:'◆'};
     a.textContent=av[p.avatar]||'✦';n.textContent=p.name;
   })();
-  initSF();rPC();load();
+  loadCommunityCards(function(){
+    initSF();rPC();load();
   // [DAILY] consume reward queue from daily.html
   try{
     const q=JSON.parse(localStorage.getItem('wish_daily_queue')||'[]');
@@ -1248,6 +1268,7 @@ function init(){
   Q('#btn-mute').textContent=S.muted?'🔇':'🔊';
   renderTabs();updateAll();
   requestAnimationFrame(loop);
+  });
 }
 init();
 // Auto-open quiz if arrived from quiz portal

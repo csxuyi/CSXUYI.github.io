@@ -141,6 +141,20 @@ export default {
       } catch (e) { return corsJson({ error: e.message }, 500); }
     }
 
+    // GET /api/cards — read approved card submissions from GitHub Issues
+    if (url.pathname === '/api/cards' && request.method === 'GET') {
+      try {
+        const issuesRes = await fetch(
+          'https://api.github.com/repos/csxuyi/CSXUYI.github.io/issues?labels=approved&state=open&per_page=50',
+          { headers: { Authorization: `Bearer ${env.GIST_TOKEN}`, 'User-Agent': 'XLab', Accept: 'application/vnd.github.v3+json' } }
+        );
+        if (!issuesRes.ok) return corsJson({ error: 'failed to fetch issues' }, 500);
+        const issues = await issuesRes.json();
+        const cards = issues.map(issue => parseCardIssue(issue)).filter(c => c);
+        return corsJson({ cards });
+      } catch (e) { return corsJson({ error: e.message }, 500); }
+    }
+
     // Health check
     if (url.pathname === '/api/health') {
       return corsJson({ status: 'ok', service: 'xlab-stellarvault' });
@@ -149,6 +163,34 @@ export default {
     return corsJson({ error: 'not found' }, 404);
   },
 };
+
+function parseCardIssue(issue) {
+  try {
+    const body = issue.body || '';
+    // Extract fields from Issue template body
+    const name = (body.match(/### 角色名称[\s\S]*?\n\s*(.+?)\s*\n/) || [])[1]?.trim()
+      || (body.match(/角色名称[：:]\s*(.+)/) || [])[1]?.trim() || '';
+    const rarityRaw = (body.match(/### 稀有度[\s\S]*?\n\s*(.+?)\s*\n/) || [])[1]?.trim()
+      || (body.match(/稀有度[：:]\s*(.+)/) || [])[1]?.trim() || '3★';
+    const rarity = parseInt(rarityRaw) || 3;
+    const img = (body.match(/### 图片[ ]?URL[\s\S]*?\n\s*(.+?)\s*\n/) || [])[1]?.trim()
+      || (body.match(/图片[ ]?URL[：:]\s*(.+)/) || [])[1]?.trim()
+      || (body.match(/https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)/i) || [])[0] || '';
+    const desc = (body.match(/### 卡牌描述[\s\S]*?\n\s*(.+?)(?:\n\n|\n###|\n_投稿|$)/) || [])[1]?.trim()
+      || (body.match(/卡牌描述[：:]\s*(.+)/) || [])[1]?.trim() || '';
+    const author = (body.match(/投稿人[（(]选填[）)][：:]?\s*(.+)/) || [])[1]?.trim() || '';
+    if (!name || !img) return null;
+    return {
+      id: 'gh-' + issue.number,
+      name,
+      rarity,
+      img,
+      desc: desc || '来自投稿 ' + (author || '匿名'),
+      issueUrl: issue.html_url,
+      author,
+    };
+  } catch (e) { return null; }
+}
 
 function corsJson(data, status = 200) {
   return new Response(JSON.stringify(data), {
