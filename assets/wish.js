@@ -560,6 +560,7 @@ function endWish(){
    PERFORM DRAW
 ============================================================ */
 function doDraw(n){
+  try{
   if(drawing)return;
   // Check resources
   const fc=Q('#fate-num');let v=parseInt(fc.textContent)||0;
@@ -606,6 +607,7 @@ function doDraw(n){
   window._lastRs=rs;window._lastN=n;
   window._lastDupes=dupes;window._lastAddedStardust=addedStardust;
   runWishAnimation(rs,rs.length);
+  }catch(e){console.error('doDraw error:',e);showToast('祈愿出错，请刷新页面重试');drawing=false;setBtns(false)}
 }
 
 function setBtns(d){Q('#btn-single').disabled=d;Q('#btn-ten').disabled=d;Q('#btn-minigame').disabled=d}
@@ -988,10 +990,29 @@ function nextQuestion(){
 
 function showQuizResult(){
   var total=quizState.questions.length;
+  // Update cumulative stats
+  try{
+    var stats=JSON.parse(localStorage.getItem('quiz-stats')||'{"totalQ":0,"totalC":0,"games":0,"highScore":0}');
+    stats.totalQ=(stats.totalQ||0)+total;
+    stats.totalC=(stats.totalC||0)+quizState.score;
+    stats.games=(stats.games||0)+1;
+    if(quizState.score>(stats.highScore||0))stats.highScore=quizState.score;
+    localStorage.setItem('quiz-stats',JSON.stringify(stats));
+  }catch(e){}
   var html='<div class="quiz-result-card">';
   html+='<h3>答题结束 ✦</h3>';
   html+='<div class="quiz-result-score">'+quizState.score+'<span> / '+total+'</span></div>';
   html+='<div class="quiz-result-fate">获得 <b>'+quizState.earned+'</b> 纠缠之缘</div>';
+  // Cumulative stats
+  try{
+    var s=JSON.parse(localStorage.getItem('quiz-stats')||'{}');
+    html+='<div style="margin:8px 0 16px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.03);font-size:0.7rem;color:var(--t2);line-height:1.8">';
+    html+='累计答题 <b style=\"color:var(--g3)\">'+(s.totalQ||0)+'</b> 题 · ';
+    html+='正确 <b style=\"color:#66ff99\">'+(s.totalC||0)+'</b> 题 · ';
+    html+='最高分 <b style=\"color:var(--gold)\">'+(s.highScore||0)+'</b>/10 · ';
+    html+='游戏 <b style=\"color:#99ddff\">'+(s.games||0)+'</b> 次';
+    html+='</div>';
+  }catch(e){}
   html+='<div class="quiz-result-actions">';
   html+='<button class="quiz-btn-retry" onclick="openQuiz()">再来一次</button>';
   html+='<button class="quiz-btn-exit" onclick="closeQuiz()">退出</button>';
