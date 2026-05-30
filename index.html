@@ -190,6 +190,7 @@ html,body{
 .portal.daily .portal-icon{background:radial-gradient(circle,rgba(255,180,100,0.15),rgba(255,180,100,0.02));border-top-color:rgba(255,180,100,0.25);border-left-color:rgba(255,180,100,0.18)}
 .portal.stats .portal-icon{background:radial-gradient(circle,rgba(130,200,230,0.15),rgba(130,200,230,0.02));border-top-color:rgba(130,200,230,0.25);border-left-color:rgba(130,200,230,0.18)}
 .portal.guestbook .portal-icon{background:radial-gradient(circle,rgba(180,220,180,0.15),rgba(180,220,180,0.02));border-top-color:rgba(180,220,180,0.25);border-left-color:rgba(180,220,180,0.18)}
+.portal.quiz .portal-icon{background:radial-gradient(circle,rgba(100,220,200,0.18),rgba(100,220,200,0.03));border-top-color:rgba(100,220,200,0.3);border-left-color:rgba(100,220,200,0.2)}
 
 .portal h2{font-family:var(--ft);font-size:1.4rem;font-weight:700}
 .portal.wish h2{background:linear-gradient(180deg,var(--g3),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -197,6 +198,7 @@ html,body{
 .portal.daily h2{background:linear-gradient(180deg,#FFCC99,#FF9966);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .portal.stats h2{background:linear-gradient(180deg,#99DDFF,#55AADD);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .portal.guestbook h2{background:linear-gradient(180deg,#C8E8C8,#66AA88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.portal.quiz h2{background:linear-gradient(180deg,#AAEEEE,#44AAAA);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
 .portal p{font-size:0.85rem;color:var(--t2);line-height:1.6}
 
@@ -438,6 +440,12 @@ if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){l
       <div class="portal-icon">📊</div>
       <h2>数据统计</h2>
       <p>回顾祈愿历程，一览数据<br>收集进度与稀有度分布</p>
+      <span class="portal-arrow">进入 →</span>
+    </a>
+    <a href="wish.html?mode=quiz" class="portal quiz">
+      <div class="portal-icon">🧠</div>
+      <h2>答题挑战</h2>
+      <p>技术知识问答，每题10抽<br>硬件·软件·安全·运维·设计</p>
       <span class="portal-arrow">进入 →</span>
     </a>
     <a class="portal guestbook" id="portal-guestbook" onclick="event.preventDefault();openGuestbook()">

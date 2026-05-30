@@ -1544,6 +1544,199 @@ body{
   .mg-gameover{padding:24px 28px}
   .mg-gameover h2{font-size:1.4rem}
 }
+
+/* ===== GAME CHOICE DIALOG ===== */
+.game-choice-overlay{
+  position:fixed;inset:0;z-index:210;
+  background:rgba(2,2,10,0.85);
+  backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+.game-choice-overlay.open{opacity:1;pointer-events:auto}
+.game-choice-card{
+  text-align:center;padding:36px 28px;border-radius:20px;
+  background:rgba(18,22,46,0.42);
+  backdrop-filter:blur(16px) saturate(140%);
+  border-top:1px solid rgba(255,255,255,0.12);
+  border-left:1px solid rgba(255,255,255,0.08);
+  border-right:1px solid rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.02);
+  box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  max-width:340px;width:90vw;
+}
+.game-choice-card h3{
+  font-family:var(--ft);font-size:1.1rem;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:24px;letter-spacing:2px;
+}
+.game-choice-btn{
+  display:block;width:100%;padding:14px 20px;margin-bottom:10px;border-radius:12px;
+  border:none;cursor:pointer;font-family:var(--fu);font-size:0.9rem;
+  transition:all 0.3s cubic-bezier(0.22,1,0.36,1);outline:none;
+}
+.game-choice-btn.hammer{
+  background:rgba(255,160,60,0.08);
+  border:1px solid rgba(255,160,60,0.25);color:#ffb874;
+}
+.game-choice-btn.hammer:hover{background:rgba(255,160,60,0.16);border-color:rgba(255,160,60,0.45);transform:translateY(-2px)}
+.game-choice-btn.quiz{
+  background:rgba(130,200,230,0.08);
+  border:1px solid rgba(130,200,230,0.25);color:#99ddff;
+}
+.game-choice-btn.quiz:hover{background:rgba(130,200,230,0.16);border-color:rgba(130,200,230,0.45);transform:translateY(-2px)}
+.game-choice-close{
+  margin-top:8px;background:none;border:1px solid rgba(255,255,255,0.1);
+  color:var(--t2);padding:8px 20px;border-radius:8px;cursor:pointer;font-size:0.75rem;
+  transition:all 0.2s;
+}
+.game-choice-close:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
+
+/* ===== QUIZ OVERLAY ===== */
+#quiz-overlay{
+  position:fixed;inset:0;z-index:205;
+  background:rgba(2,2,10,0.93);
+  display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;transition:opacity 0.35s;
+}
+#quiz-overlay.open{opacity:1;pointer-events:auto}
+.quiz-top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 20px;
+  background:rgba(12,20,42,0.8);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(100,180,220,0.15);
+}
+.quiz-progress{
+  font-family:var(--ft);font-size:0.9rem;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.quiz-score{font-family:var(--ft);font-size:0.9rem;color:#99ddff}
+.quiz-close-btn{
+  width:32px;height:32px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);
+  color:var(--t2);cursor:pointer;font-size:0.9rem;
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+.quiz-close-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
+.quiz-body{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;overflow-y:auto;
+}
+.quiz-question-card{
+  width:min(560px,92vw);padding:28px 24px;border-radius:18px;
+  background:rgba(18,22,40,0.30);
+  backdrop-filter:blur(12px);
+  border-top:1px solid rgba(255,255,255,0.10);
+  border-left:1px solid rgba(255,255,255,0.06);
+  border-right:1px solid rgba(255,255,255,0.03);
+  border-bottom:1px solid rgba(255,255,255,0.01);
+  box-shadow:0 16px 40px rgba(0,0,0,0.4);
+  text-align:center;
+}
+.quiz-q-num{
+  font-family:"JetBrains Mono",monospace;font-size:0.7rem;
+  color:var(--t3);letter-spacing:0.2em;margin-bottom:14px;
+}
+.quiz-q-text{
+  font-family:var(--ft);font-size:1.05rem;color:var(--text);
+  line-height:1.7;margin-bottom:24px;letter-spacing:0.04em;
+}
+.quiz-options{display:flex;flex-direction:column;gap:10px}
+.quiz-opt{
+  width:100%;padding:13px 18px;border-radius:10px;text-align:left;
+  font-family:var(--fu);font-size:0.85rem;cursor:pointer;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.025);
+  color:var(--text);transition:all 0.25s;
+  display:flex;align-items:center;gap:10px;
+}
+.quiz-opt:hover{
+  background:rgba(255,255,255,0.06);
+  border-color:rgba(255,255,255,0.16);
+}
+.quiz-opt .opt-label{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.72rem;font-weight:700;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+}
+.quiz-opt.correct{
+  background:rgba(102,255,153,0.12)!important;
+  border-color:rgba(102,255,153,0.4)!important;
+}
+.quiz-opt.correct .opt-label{background:rgba(102,255,153,0.2);border-color:#66ff99;color:#66ff99}
+.quiz-opt.wrong{
+  background:rgba(255,100,120,0.12)!important;
+  border-color:rgba(255,100,120,0.4)!important;
+}
+.quiz-opt.wrong .opt-label{background:rgba(255,100,120,0.2);border-color:#ff6478;color:#ff6478}
+.quiz-opt:disabled{pointer-events:none;opacity:0.7}
+.quiz-feedback{
+  margin-top:14px;font-family:"JetBrains Mono",monospace;
+  font-size:0.78rem;min-height:22px;
+}
+.quiz-feedback.correct-fb{color:#66ff99}
+.quiz-feedback.wrong-fb{color:#ff9098}
+.quiz-next-btn{
+  margin-top:16px;padding:10px 32px;border-radius:10px;
+  border:1px solid rgba(100,180,220,0.3);
+  background:rgba(100,180,220,0.08);
+  color:#99ddff;font-size:0.85rem;cursor:pointer;
+  font-family:var(--fu);transition:all 0.25s;display:none;
+}
+.quiz-next-btn:hover{background:rgba(100,180,220,0.16);border-color:rgba(100,180,220,0.5)}
+.quiz-next-btn.show{display:inline-block}
+
+/* Quiz result */
+.quiz-result-card{
+  text-align:center;padding:36px 28px;border-radius:20px;
+  background:rgba(18,22,40,0.30);
+  backdrop-filter:blur(14px);
+  border-top:1px solid rgba(255,255,255,0.10);
+  border-left:1px solid rgba(255,255,255,0.06);
+  border-right:1px solid rgba(255,255,255,0.03);
+  border-bottom:1px solid rgba(255,255,255,0.01);
+  box-shadow:0 16px 40px rgba(0,0,0,0.4);
+  max-width:400px;width:90vw;
+}
+.quiz-result-card h3{
+  font-family:var(--ft);font-size:1.3rem;
+  background:linear-gradient(180deg,var(--g3),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;
+}
+.quiz-result-score{
+  font-family:"JetBrains Mono",monospace;font-size:2rem;font-weight:700;
+  color:var(--g3);margin-bottom:6px;
+}
+.quiz-result-score span{font-size:1rem;color:var(--t2)}
+.quiz-result-fate{
+  font-size:0.95rem;color:#99ddff;margin-bottom:20px;
+}
+.quiz-result-fate b{color:#fff;font-size:1.2rem}
+.quiz-result-actions{display:flex;gap:12px;justify-content:center}
+.quiz-btn-retry,.quiz-btn-exit{
+  padding:10px 24px;border-radius:10px;font-size:0.82rem;cursor:pointer;
+  font-family:var(--fu);transition:all 0.25s;
+}
+.quiz-btn-retry{
+  background:rgba(100,180,220,0.1);
+  border:1px solid rgba(100,180,220,0.3);color:#99ddff;
+}
+.quiz-btn-retry:hover{background:rgba(100,180,220,0.2);border-color:rgba(100,180,220,0.5)}
+.quiz-btn-exit{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.1);color:var(--t2);
+}
+.quiz-btn-exit:hover{color:var(--text);border-color:rgba(255,255,255,0.25)}
+
+@media(max-width:480px){
+  .quiz-q-text{font-size:0.9rem}
+  .quiz-opt{font-size:0.78rem;padding:11px 14px}
+}
 </style>
 <style>
 /* ============ wish.html · GEEK ENHANCEMENT LAYER ============ */
@@ -2544,6 +2737,28 @@ if(!localStorage.getItem('xlab-profile')&&!sessionStorage.getItem('gh_token')){l
 </div>
 <div id="mg-hammer">🔨</div>
 
+<!-- Game choice dialog -->
+<div class="game-choice-overlay" id="game-choice-overlay">
+  <div class="game-choice-card">
+    <h3>— 选择挑战 —</h3>
+    <button class="game-choice-btn hammer" id="btn-choice-hammer">🔨 打地鼠 · 15秒</button>
+    <button class="game-choice-btn quiz" id="btn-choice-quiz">📝 答题挑战 · 10题</button>
+    <button class="game-choice-close" id="btn-choice-close">取消</button>
+  </div>
+</div>
+
+<!-- Quiz overlay -->
+<div id="quiz-overlay">
+  <div class="quiz-top-bar">
+    <span class="quiz-progress" id="quiz-progress">第 1/10 题</span>
+    <span class="quiz-score" id="quiz-score">得分: 0</span>
+    <button class="quiz-close-btn" id="quiz-close">✕</button>
+  </div>
+  <div class="quiz-body" id="quiz-body">
+    <!-- Filled by JS -->
+  </div>
+</div>
+
 <!-- ▼ FULLSCREEN WISH ANIMATION STAGE -->
 <div id="wish-stage">
   <!-- Stargate -->
@@ -3387,6 +3602,7 @@ Q('#btn-mute').addEventListener('click',function(){
 ============================================================ */
 const ALL_CARDS=[...C6,...C5,...C4,...C3];
 let mgState={active:false,earned:0,timeLeft:15,timer:null,charTimer:null,_moveTimeout:null};
+let quizState={active:false,qIndex:0,score:0,earned:0,questions:[],answered:false};
 
 function openMinigame(){
   if(drawing||mgState.active)return;
@@ -3449,6 +3665,110 @@ function creditFate(){
   save();
 }
 
+/* ============================================================
+   QUIZ CHALLENGE
+============================================================ */
+function openQuiz(){
+  if(drawing||quizState.active)return;
+  // Build quiz: Q1 fixed + 9 random from bank
+  var pool=QUIZ_BANK.slice();
+  for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=pool[i];pool[i]=pool[j];pool[j]=t}
+  var selected=pool.slice(0,9);
+  selected.unshift(QUIZ_Q1); // Q1 always first
+  quizState={active:true,qIndex:0,score:0,earned:0,questions:selected,answered:false};
+  Q('#quiz-overlay').classList.add('open');
+  Q('#quiz-score').textContent='得分: 0';
+  renderQuizQuestion();
+}
+
+function closeQuiz(){
+  quizState.active=false;
+  Q('#quiz-overlay').classList.remove('open');
+  if(quizState.earned>0){creditQuizFate();save();}
+}
+
+function creditQuizFate(){
+  if(quizState.earned<=0)return;
+  var fc=Q('#fate-num');
+  var v=parseInt(fc.textContent)||0;
+  fc.textContent=v+quizState.earned;
+  fc.classList.remove('bump');void fc.offsetWidth;fc.classList.add('bump');
+}
+
+function renderQuizQuestion(){
+  var q=quizState.questions[quizState.qIndex];
+  var total=quizState.questions.length;
+  Q('#quiz-progress').textContent='第 '+(quizState.qIndex+1)+'/'+total+' 题';
+  var labels=['A','B','C','D'];
+  var html='<div class="quiz-question-card">';
+  html+='<div class="quiz-q-num">▸ QUESTION '+(quizState.qIndex+1)+' / '+total+'</div>';
+  html+='<div class="quiz-q-text">'+q[0]+'</div>';
+  html+='<div class="quiz-options">';
+  for(var i=0;i<4;i++){
+    html+='<button class="quiz-opt" data-idx="'+i+'" onclick="selectAnswer('+i+')">';
+    html+='<span class="opt-label">'+labels[i]+'</span>';
+    html+='<span>'+q[i+1]+'</span></button>';
+  }
+  html+='</div>';
+  html+='<div class="quiz-feedback" id="quiz-feedback"></div>';
+  html+='<button class="quiz-next-btn" id="quiz-next-btn" onclick="nextQuestion()">下一题 ▸</button>';
+  html+='</div>';
+  Q('#quiz-body').innerHTML=html;
+  quizState.answered=false;
+  Q('#quiz-next-btn').classList.remove('show');
+}
+
+function selectAnswer(idx){
+  if(quizState.answered)return;
+  quizState.answered=true;
+  var q=quizState.questions[quizState.qIndex];
+  var correct=q[5]-1;
+  var opts=document.querySelectorAll('.quiz-opt');
+  var fb=Q('#quiz-feedback');
+  // Highlight correct answer
+  opts[correct].classList.add('correct');
+  if(idx===correct){
+    quizState.score++;
+    quizState.earned+=10;
+    Q('#quiz-score').textContent='得分: '+quizState.score;
+    fb.textContent='✓ 正确！+10 抽';
+    fb.className='quiz-feedback correct-fb';
+  }else{
+    opts[idx].classList.add('wrong');
+    fb.textContent='✗ 错误。正确答案是 '+['A','B','C','D'][correct];
+    fb.className='quiz-feedback wrong-fb';
+  }
+  // Disable all options
+  opts.forEach(function(o){o.disabled=true});
+  Q('#quiz-next-btn').classList.add('show');
+}
+
+function nextQuestion(){
+  quizState.qIndex++;
+  if(quizState.qIndex>=quizState.questions.length){
+    showQuizResult();
+  }else{
+    renderQuizQuestion();
+  }
+}
+
+function showQuizResult(){
+  var total=quizState.questions.length;
+  var html='<div class="quiz-result-card">';
+  html+='<h3>答题结束 ✦</h3>';
+  html+='<div class="quiz-result-score">'+quizState.score+'<span> / '+total+'</span></div>';
+  html+='<div class="quiz-result-fate">获得 <b>'+quizState.earned+'</b> 纠缠之缘</div>';
+  html+='<div class="quiz-result-actions">';
+  html+='<button class="quiz-btn-retry" onclick="openQuiz()">再来一次</button>';
+  html+='<button class="quiz-btn-exit" onclick="closeQuiz()">退出</button>';
+  html+='</div></div>';
+  Q('#quiz-body').innerHTML=html;
+  Q('#quiz-progress').textContent='答题完成';
+}
+
+// Quiz close button
+Q('#quiz-close').addEventListener('click',closeQuiz);
+
 function moveCharacter(){
   const area=Q('#mg-play-area');
   const rect=area.getBoundingClientRect();
@@ -3501,12 +3821,24 @@ document.addEventListener('click',e=>{if(mgState.active)handleWhack(e.clientX,e.
 document.addEventListener('touchmove',e=>{if(mgState.active){Q('#mg-hammer').style.left=e.touches[0].clientX+'px';Q('#mg-hammer').style.top=e.touches[0].clientY+'px'}},{passive:true});
 document.addEventListener('touchstart',e=>{if(mgState.active)handleWhack(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
 
-Q('#btn-minigame').addEventListener('click',openMinigame);
+// Game choice: hammer or quiz
+function openGameChoice(){
+  if(drawing||mgState.active||quizState.active)return;
+  Q('#game-choice-overlay').classList.add('open');
+}
+function closeGameChoice(){Q('#game-choice-overlay').classList.remove('open')}
+Q('#btn-minigame').addEventListener('click',openGameChoice);
+Q('#btn-choice-hammer').addEventListener('click',()=>{closeGameChoice();openMinigame();});
+Q('#btn-choice-quiz').addEventListener('click',()=>{closeGameChoice();openQuiz();});
+Q('#btn-choice-close').addEventListener('click',closeGameChoice);
+Q('#game-choice-overlay').addEventListener('click',e=>{if(e.target===Q('#game-choice-overlay'))closeGameChoice()});
+
 Q('#mg-close').addEventListener('click',()=>closeMinigame(true));
 Q('#mg-replay').addEventListener('click',()=>{closeMinigame(false);setTimeout(openMinigame,350)});
-// ESC: close minigame > skip wish animation
+// ESC: close minigame/quiz > skip wish animation
 document.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
+  if(quizState.active){closeQuiz();return;}
   if(mgState.active){closeMinigame(true);return;}
   if(drawing||wishStage.classList.contains('active')){skipAnimation();return;}
 });
@@ -3583,6 +3915,8 @@ function init(){
   requestAnimationFrame(loop);
 }
 init();
+// Auto-open quiz if arrived from quiz portal
+if(/[?&]mode=quiz/.test(location.search)){setTimeout(openQuiz,600);}
 })();
 </script>
 <script>
@@ -3609,6 +3943,7 @@ init();
 <script src="assets/wish-bg.js"></script>
 <script src="assets/wish-cinema.js"></script>
 <script src="assets/sync.js"></script>
+<script src="assets/quiz-bank.js"></script>
 <script src="assets/geek.js"></script>
 </body>
 </html>
