@@ -1217,15 +1217,20 @@ function loop(t){
 }
 function loadCommunityCards(cb){
   var WORKER_URL='https://xlab-auth.xlab-stellarvault.workers.dev';
-  fetch(WORKER_URL+'/api/cards').then(function(r){return r.json()}).then(function(data){
+  var controller=new AbortController();
+  var timeout=setTimeout(function(){controller.abort()},5000);
+  fetch(WORKER_URL+'/api/cards',{signal:controller.signal}).then(function(r){return r.json()}).then(function(data){
+    clearTimeout(timeout);
     var cards=data.cards||[];
     cards.forEach(function(c){
+      if(!c.name||!c.img||!c.rarity)return; // skip invalid
+      c.rarity=parseInt(c.rarity)||3;
+      if(c.rarity<3||c.rarity>6)return;
       var arr;
       if(c.rarity===6)arr=C6;
       else if(c.rarity===5)arr=C5;
       else if(c.rarity===4)arr=C4;
       else arr=C3;
-      // Avoid duplicates
       var exists=arr.some(function(x){return x.id===c.id});
       if(!exists)arr.push(c);
     });

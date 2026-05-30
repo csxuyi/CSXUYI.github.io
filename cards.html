@@ -945,18 +945,24 @@ document.addEventListener('mouseenter',()=>cursor.style.opacity='1');
 // ── Init: load community cards first, then render ──
 function initCards(){
   var WORKER_URL='https://xlab-auth.xlab-stellarvault.workers.dev';
-  fetch(WORKER_URL+'/api/cards').then(function(r){return r.json()}).then(function(data){
+  var controller=new AbortController();
+  var timeout=setTimeout(function(){controller.abort();goRender()},5000);
+  fetch(WORKER_URL+'/api/cards',{signal:controller.signal}).then(function(r){return r.json()}).then(function(data){
+    clearTimeout(timeout);
     var cards=data.cards||[];
     cards.forEach(function(c){
+      if(!c.name||!c.img||!c.rarity)return;
+      c.rarity=parseInt(c.rarity)||3;
+      if(c.rarity<3||c.rarity>6)return;
       var exists=ALL.some(function(x){return x.name===c.name||x.id===c.id});
       if(!exists)ALL.push(c);
     });
     if(cards.length)console.log('[Community] Loaded '+cards.length+' approved cards');
   }).catch(function(e){console.warn('[Community] Failed to load cards:',e)})
-  .finally(function(){
-    // Recalculate pagination
+  .finally(function(){goRender()});
+
+  function goRender(){
     TOTAL_PAGES=Math.ceil(ALL.length/PER_PAGE);
-    // Rebuild page dots
     pageDots.innerHTML='';
     for(var i=0;i<TOTAL_PAGES;i++){
       var dot=document.createElement('span');
@@ -966,7 +972,7 @@ function initCards(){
     }
     currentPage=0;
     renderPage(0);
-  });
+  }
 }
 initCards();
 </script>
