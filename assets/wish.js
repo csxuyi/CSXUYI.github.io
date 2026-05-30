@@ -1000,6 +1000,17 @@ function showQuizResult(){
     stats.games=(stats.games||0)+1;
     if(quizState.score>(stats.highScore||0))stats.highScore=quizState.score;
     localStorage.setItem('quiz-stats',JSON.stringify(stats));
+    // Push to cloud leaderboard (GitHub users only)
+    try{
+      var gh=JSON.parse(sessionStorage.getItem('gh_user')||'null');
+      if(gh&&gh.login){
+        var WORKER_URL=('https://xlab-auth.xlab-stellarvault.workers.dev');
+        fetch(WORKER_URL+'/api/leaderboard',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({login:gh.login,avatar:gh.avatar_url,quizStats:stats})
+        }).catch(function(){});
+      }
+    }catch(e){}
   }catch(e){}
   var html='<div class="quiz-result-card">';
   html+='<h3>答题结束 ✦</h3>';

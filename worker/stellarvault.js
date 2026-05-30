@@ -1,15 +1,12 @@
 /**
- * X[STELLAR_WISH] · Cloudflare Worker — GitHub OAuth Token Proxy
+ * X[STELLAR_WISH] · Cloudflare Worker — OAuth Proxy + Leaderboard
  *
  * 部署步骤:
- *   1. npm install -g wrangler
- *   2. wrangler login
- *   3. wrangler secret put CLIENT_ID     # 填入 GitHub OAuth App Client ID
- *   4. wrangler secret put CLIENT_SECRET # 填入 GitHub OAuth App Client Secret
+ *   1. wrangler secret put CLIENT_ID
+ *   2. wrangler secret put CLIENT_SECRET
+ *   3. wrangler secret put GIST_TOKEN       # GitHub PAT with gist scope
+ *   4. wrangler secret put LEADERBOARD_GIST_ID  # Shared leaderboard Gist ID
  *   5. wrangler deploy
- *
- * 部署后你会得到一个 URL: https://xlab-auth.YOUR_USERNAME.workers.dev
- * 将其填入 assets/sync.js 的 WORKER_URL 中
  */
 
 export default {
@@ -21,7 +18,7 @@ export default {
       return new Response(null, {
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type',
         },
       });
@@ -81,6 +78,67 @@ export default {
           avatar_url: user.avatar_url,
         },
       });
+    }
+
+    // GET /api/leaderboard — return top 20
+    if (url.pathname === '/api/leaderboard' && request.method === 'GET') {
+      try {
+        const gistRes = await fetch(
+          `https://api.github.com/gists/${env.LEADERBOARD_GIST_ID}`,
+          { headers: { Authorization: `Bearer ${env.GIST_TOKEN}`, 'User-Agent': 'XLab', Accept: 'application/vnd.github.v3+json' } }
+        );
+        if (!gistRes.ok) return corsJson({ error: 'failed to read leaderboard' }, 500);
+        const gist = await gistRes.json();
+        const raw = gist.files?.['leaderboard.json']?.content;
+        if (!raw) return corsJson({ entries: [] });
+        const data = JSON.parse(raw);
+        const entries = (data.entries || [])
+          .sort((a, b) => (b.totalQ || 0) - (a.totalQ || 0))
+          .slice(0, 20);
+        return corsJson({ entries });
+      } catch (e) { return corsJson({ error: e.message }, 500); }
+    }
+
+    // POST /api/leaderboard — submit quiz stats (GitHub user only)
+    if (url.pathname === '/api/leaderboard' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        if (!body.login || !body.quizStats) return corsJson({ error: 'missing fields' }, 400);
+        // Read current leaderboard
+        const gistRes = await fetch(
+          `https://api.github.com/gists/${env.LEADERBOARD_GIST_ID}`,
+          { headers: { Authorization: `Bearer ${env.GIST_TOKEN}`, 'User-Agent': 'XLab', Accept: 'application/vnd.github.v3+json' } }
+        );
+        if (!gistRes.ok) return corsJson({ error: 'failed to read leaderboard' }, 500);
+        const gist = await gistRes.json();
+        const raw = gist.files?.['leaderboard.json']?.content;
+        const data = raw ? JSON.parse(raw) : { entries: [] };
+        // Upsert: update existing or add new
+        const idx = data.entries.findIndex(e => e.login === body.login);
+        const entry = {
+          login: body.login,
+          avatar: body.avatar || '',
+          totalQ: body.quizStats.totalQ || 0,
+          totalC: body.quizStats.totalC || 0,
+          accuracy: body.quizStats.totalQ > 0 ? Math.round((body.quizStats.totalC / body.quizStats.totalQ) * 100) : 0,
+          highScore: body.quizStats.highScore || 0,
+          games: body.quizStats.games || 0,
+          updatedAt: Date.now(),
+        };
+        if (idx >= 0) data.entries[idx] = entry;
+        else data.entries.push(entry);
+        // Write back
+        const updateRes = await fetch(
+          `https://api.github.com/gists/${env.LEADERBOARD_GIST_ID}`,
+          {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${env.GIST_TOKEN}`, 'User-Agent': 'XLab', 'Content-Type': 'application/json', Accept: 'application/vnd.github.v3+json' },
+            body: JSON.stringify({ files: { 'leaderboard.json': { content: JSON.stringify(data, null, 2) } } }),
+          }
+        );
+        if (!updateRes.ok) return corsJson({ error: 'failed to update leaderboard' }, 500);
+        return corsJson({ ok: true });
+      } catch (e) { return corsJson({ error: e.message }, 500); }
     }
 
     // Health check
