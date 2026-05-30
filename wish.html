@@ -3768,6 +3768,9 @@ function showQuizResult(){
 
 // Quiz close button
 Q('#quiz-close').addEventListener('click',closeQuiz);
+// Export to global scope for onclick handlers in dynamic HTML
+window.openQuiz=openQuiz;window.closeQuiz=closeQuiz;
+window.selectAnswer=selectAnswer;window.nextQuestion=nextQuestion;
 
 function moveCharacter(){
   const area=Q('#mg-play-area');
