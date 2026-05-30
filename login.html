@@ -513,13 +513,45 @@ html,body{
     if(raw) profile = JSON.parse(raw);
   } catch(e){}
 
+  // ---- GitHub login state
+  var ghUser = null;
+  try {
+    var ghRaw = sessionStorage.getItem('gh_user');
+    if(ghRaw) ghUser = JSON.parse(ghRaw);
+  } catch(e){}
+
   // ---- Logout mode
   if(/[?&]logout=1/.test(location.search)){
     localStorage.removeItem('xlab-profile');
     profile = null;
-    // Clean URL
+    sessionStorage.removeItem('gh_token');
+    sessionStorage.removeItem('gh_user');
+    ghUser = null;
     if(history.replaceState) history.replaceState(null,'',location.pathname);
   }
+
+  // ---- If GitHub logged in, show GitHub welcome (hide guest form)
+  if(ghUser){
+    document.getElementById('subtag-line').textContent = '▸ github.user.verified()';
+    var card = document.getElementById('login-card');
+    var hiders = card.querySelectorAll('.login-section,.btn-wrap,.auth-divider,.btn-github,.gh-note');
+    for(var i=0;i<hiders.length;i++) hiders[i].style.display = 'none';
+    var wb = document.getElementById('welcome-back');
+    wb.classList.add('show');
+    var wba = document.getElementById('wb-avatar');
+    wba.textContent = '';
+    var img = document.createElement('img');
+    img.src = ghUser.avatar_url; img.style.width = '40px'; img.style.height = '40px'; img.style.borderRadius = '50%';
+    wba.appendChild(img);
+    wba.style.background = 'transparent'; wba.style.border = 'none';
+    document.getElementById('wb-name').textContent = ghUser.login;
+    document.querySelector('.wb-text').innerHTML = '已通过 <b style=\"color:#fff\">GitHub</b> 登录';
+    document.getElementById('wb-enter').textContent = '返回主页 ▸';
+    document.getElementById('wb-enter').href = 'index.html';
+    document.getElementById('wb-reset').textContent = '登出 GitHub';
+    document.getElementById('wb-reset').href = '?logout=1';
+    // No need to continue with guest form setup
+  } else {
 
   // ---- Build avatar grid
   var grid = document.getElementById('avatar-grid');
@@ -623,6 +655,7 @@ html,body{
       nameInput.focus();
     }
   }, 400);
+  } // end else (not GitHub)
 })();
 </script>
 

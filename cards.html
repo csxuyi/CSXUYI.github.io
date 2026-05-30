@@ -580,26 +580,40 @@ const ALL=[
   {name:"zonk",img:"image/zzh4.jpg",rarity:3,desc:"低客的黑调"},
 ];
 
-// [MYSTERY] 创世神隐藏：只有真正抽出 6★ 后才在图鉴中揭示
+// [MYSTERY] 图鉴锁定：只有抽到过的卡牌才会解锁显示
 (function(){
-  const gIdx=ALL.findIndex(c=>c.rarity===6);
-  if(gIdx<0) return;
-  let unlocked=false;
+  // 收集已抽取的卡牌名称
+  const pulled=new Set();
+  let hasSixStar=false;
   try{
     const d=JSON.parse(localStorage.getItem('wish_genshin_v5'));
     if(d && d.hi){
-      unlocked=d.hi.some(h=>h.rarity===6);
+      d.hi.forEach(function(h){
+        if(h.card && h.card.name) pulled.add(h.card.name);
+        if(h.rarity===6) hasSixStar=true;
+      });
     }
   }catch(e){}
-  if(!unlocked){
-    ALL[gIdx]={
-      name:'???',
-      img:'',
-      rarity:6,
-      desc:'条件未知 · 尚未揭示',
-      locked:true
-    };
-  }
+
+  // 锁定未抽取的卡牌
+  ALL.forEach(function(c, i){
+    // 6★ 创世神特殊处理：必须抽到过6★才揭示
+    if(c.rarity===6 && !hasSixStar){
+      ALL[i]={name:'???', img:'', rarity:6, desc:'条件未知 · 尚未揭示', locked:true};
+      return;
+    }
+    // 其他卡牌：抽到过才解锁
+    if(!pulled.has(c.name)){
+      ALL[i]={
+        name:'???',
+        img:'',
+        rarity:c.rarity,
+        desc:'尚未抽取 · 祈愿中获取',
+        locked:true,
+        _realRarity:c.rarity
+      };
+    }
+  });
 })();
 
 const PER_PAGE=5;
@@ -673,8 +687,8 @@ function renderPage(page){
   document.getElementById('legend-rarity').textContent='—';
 
   pageCards.forEach((c,i)=>{
-    const rClass='s'+c.rarity;
-    const stars='★'.repeat(c.rarity)+'☆'.repeat(Math.max(0,6-c.rarity));
+    const rClass='s'+(c._realRarity||c.rarity);
+    const stars=c.locked?'??????':'★'.repeat(c.rarity)+'☆'.repeat(Math.max(0,6-c.rarity));
     const el=document.createElement('article');
     el.className='card '+rClass;
     el.dataset.i=i;
@@ -686,7 +700,7 @@ function renderPage(page){
     const locked=c.locked;
     el.innerHTML=`<div class="card-flip">
       <div class="edge left"></div><div class="edge right"></div>
-      ${locked ? backFaceHTML(6).replace(/VI/g,'?').replace(/6★/g,'???') : backFaceHTML(c.rarity)}
+      ${locked ? backFaceHTML(c._realRarity||c.rarity).replace(/VI/g,'?').replace(/6★/g,'???') : backFaceHTML(c.rarity)}
       <div class="face front ${rClass} ${locked?'locked-card':''}">
         ${locked
           ? `<div class="front-locked"><div class="locked-glyph">✦</div><div class="locked-label">抽 取 后 揭 示</div></div>`
@@ -942,8 +956,8 @@ renderPage(0);
   if(gh){try{gh=JSON.parse(gh);}catch(e){gh=null}}
   if(gh){
     var img=document.createElement('img');
-    img.src=gh.avatar_url;img.style.width='100%';img.style.height='100%';img.style.borderRadius='50%';img.style.display='block';
-    a.textContent='';a.appendChild(img);a.style.padding='0';
+    img.src=gh.avatar_url;img.style.width='20px';img.style.height='20px';img.style.borderRadius='50%';img.style.display='block';img.style.flexShrink='0';
+    a.textContent='';a.appendChild(img);a.style.display='inline-flex';a.style.alignItems='center';a.style.justifyContent='center';a.style.padding='0';a.style.flexShrink='0';
     n.textContent=gh.login;
     return;
   }
